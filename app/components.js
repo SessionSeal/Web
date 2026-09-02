@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 export function fmtBytes(n) {
   if (n == null) return "—";
@@ -63,5 +64,37 @@ export function Drop({ filled, big, small, onClick, onFiles }) {
       <div className="big">{big}</div>
       <div className="small">{small}</div>
     </div>
+  );
+}
+
+
+export function AuthButton() {
+  const { data: session, status } = useSession();
+  if (status === "loading") return null;
+  if (!session?.user) {
+    return (
+      <button className="ld-pill ghost"
+        style={{ cursor: "pointer", font: "inherit", fontWeight: 700,
+                 border: "1px solid var(--border-strong)" }}
+        onClick={() => signIn("google")}>
+        Sign in
+      </button>
+    );
+  }
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+      {session.user.image && (
+        <img src={session.user.image} alt="" width={26} height={26}
+          style={{ borderRadius: "50%" }} referrerPolicy="no-referrer" />
+      )}
+      <span style={{ fontSize: "0.84rem", fontWeight: 600 }}>
+        {session.user.name || session.user.email}
+      </span>
+      <button onClick={() => signOut()}
+        style={{ background: "none", border: "none", color: "var(--muted)",
+                 cursor: "pointer", font: "inherit", fontSize: "0.78rem" }}>
+        Sign out
+      </button>
+    </span>
   );
 }

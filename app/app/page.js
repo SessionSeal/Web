@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { zipSync } from "fflate";
+import { signIn, useSession } from "next-auth/react";
+import { AuthButton } from "../components";
 
 const API = "/backend";
 
@@ -129,6 +131,7 @@ function Drop({ filled, big, small, onClick, onDrop, children }) {
 }
 
 export default function ArtistApp() {
+  const { data: session, status: authStatus } = useSession();
   const [step, setStep] = useState(0);
   const [artist, setArtist] = useState("");
   const [master, setMaster] = useState(null);
@@ -345,6 +348,7 @@ export default function ArtistApp() {
         </a>
         <div className="links">
           <a href="/">← Back to site</a>
+          <AuthButton />
         </div>
       </div>
 
@@ -559,9 +563,15 @@ export default function ArtistApp() {
             {error && <div className="wz-flag">{error}</div>}
             <div className="wz-navrow">
               <button className="wz-btn ghost" disabled={!!busy} onClick={() => setStep(2)}>← Back</button>
-              <button className="wz-btn seal" disabled={!!busy} onClick={seal}>
-                {busy ? "Sealing…" : "Seal my record"}
-              </button>
+              {authStatus !== "loading" && !session?.user ? (
+                <button className="wz-btn seal" onClick={() => signIn("google")}>
+                  Sign in with Google to seal
+                </button>
+              ) : (
+                <button className="wz-btn seal" disabled={!!busy || authStatus === "loading"} onClick={seal}>
+                  {busy ? "Sealing…" : "Seal my record"}
+                </button>
+              )}
             </div>
             {busy === "seal" && progress && (
               <div className="wz-busy">
