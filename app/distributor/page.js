@@ -121,7 +121,7 @@ export default function Distributor() {
                   <div className="row"><span className="k">Does not prove</span><span className="v">{rec.does_not_prove}</span></div>
                 </div>
                 <a className="wz-btn ghost" style={{ textDecoration: "none" }}
-                  href={`${API}/product/records/${rec.record_id}/manifest`}
+                  href={rec.manifest_url || `${API}/product/records/${rec.record_id}/manifest`}
                   target="_blank" rel="noreferrer">
                   Download the signed manifest →
                 </a>
