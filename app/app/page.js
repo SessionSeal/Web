@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { zipSync } from "fflate";
 
 const API = "/backend";
 
@@ -178,61 +179,96 @@ export default function ArtistApp() {
     step === 1 ? stems.length >= 2 :
     step === 2 ? !!project : true;
 
+  async function packProjectZip() {
+    // A picked .zip uploads as-is; folder-picked/dragged files are zipped
+    // in the browser (store-level, no compression — speed over size).
+    if (project.zip) return project.zip;
+    setProgress({ pct: 2, stage: "Packing your session" });
+    const entries = {};
+    for (const { file, path } of project.files) {
+      entries[path] = new Uint8Array(await file.arrayBuffer());
+    }
+    const zipped = zipSync(entries, { level: 0 });
+    return new Blob([zipped], { type: "application/zip" });
+  }
+
+  function putWithProgress(url, blob, contentType, onBytes) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", url);
+      if (contentType) xhr.setRequestHeader("Content-Type", contentType);
+      xhr.upload.onprogress = (ev) => {
+        if (ev.lengthComputable) onBytes(ev.loaded);
+      };
+      xhr.onload = () => (xhr.status >= 200 && xhr.status < 300)
+        ? resolve() : reject(new Error(`upload failed (${xhr.status})`));
+      xhr.onerror = () => reject(new Error("NetworkError"));
+      xhr.send(blob);
+    });
+  }
+
   async function seal() {
     setBusy("seal");
     setError(null);
-    setProgress({ pct: 0, stage: "Uploading your files" });
+    setProgress({ pct: 0, stage: "Preparing" });
     let ticker = null;
     try {
-      const fd = new FormData();
-      fd.append("artist", artist.trim());
-      fd.append("master", master);
-      for (const s of stems) fd.append("stems", s);
-      if (project.zip) {
-        fd.append("project", project.zip);
-      } else {
-        for (const { file, path } of project.files) {
-          fd.append("project_files", file);
-          fd.append("project_paths", path);
-        }
-      }
-      // fetch can't report upload progress; XHR can. Upload maps to 0-40%,
-      // then server-side sealing is estimated 40-95% in pipeline order.
-      const body = await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", `${API}/product/register`);
-        xhr.responseType = "json";
-        xhr.upload.onprogress = (ev) => {
-          if (ev.lengthComputable) {
-            setProgress({
-              pct: Math.round((ev.loaded / ev.total) * 40),
-              stage: "Uploading your files",
-            });
-          }
-        };
-        xhr.upload.onload = () => {
-          const t0 = Date.now();
-          ticker = setInterval(() => {
-            const t = (Date.now() - t0) / 1000;
-            const pct = Math.round(40 + 55 * (1 - Math.exp(-t / 20)));
-            const stage =
-              pct < 52 ? "Checking your stems rebuild the master" :
-              pct < 64 ? "Cross-examining your session" :
-              pct < 76 ? "Embedding the inaudible watermark" :
-              pct < 86 ? "Taking the sound fingerprint" :
-              "Signing & timestamping";
-            setProgress({ pct: Math.min(pct, 95), stage });
-          }, 400);
-        };
-        xhr.onload = () => {
-          const b = xhr.response;
-          if (xhr.status >= 200 && xhr.status < 300) resolve(b);
-          else reject(new Error(
-            b && typeof b.detail === "string" ? b.detail : JSON.stringify(b?.detail ?? xhr.status)));
-        };
-        xhr.onerror = () => reject(new Error("NetworkError"));
-        xhr.send(fd);
+      const projectBlob = await packProjectZip();
+
+      // 1. draft record + upload slots
+      const fileMeta = [
+        { kind: "MASTER", filename: master.name,
+          content_type: master.type || "audio/wav", size_bytes: master.size },
+        ...stems.map((s) => ({ kind: "STEM", filename: s.name,
+          content_type: s.type || "audio/wav", size_bytes: s.size })),
+        { kind: "PROJECT", filename: "project.zip",
+          content_type: "application/zip", size_bytes: projectBlob.size },
+      ];
+      const draftRes = await fetch(`${API}/records/draft`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ artist: artist.trim(), files: fileMeta }),
       });
+      const draft = await draftRes.json();
+      if (!draftRes.ok) throw new Error(draft.detail || "draft failed");
+
+      // 2. upload each file straight to storage (real progress, 4-40%)
+      const blobs = [master, ...stems, projectBlob];
+      const totalBytes = blobs.reduce((a, b) => a + b.size, 0) || 1;
+      const sent = blobs.map(() => 0);
+      const bump = () => {
+        const done = sent.reduce((a, b) => a + b, 0);
+        setProgress({ pct: Math.min(40, 4 + Math.round((done / totalBytes) * 36)),
+                      stage: "Uploading your files" });
+      };
+      for (let i = 0; i < blobs.length; i++) {
+        const u = draft.uploads[i];
+        await putWithProgress(u.url, blobs[i],
+          fileMeta[i].content_type, (loaded) => { sent[i] = loaded; bump(); });
+        sent[i] = blobs[i].size;
+        bump();
+      }
+
+      // 3. seal — server-side work estimated 40-95% in pipeline order
+      const t0 = Date.now();
+      ticker = setInterval(() => {
+        const t = (Date.now() - t0) / 1000;
+        const pct = Math.round(40 + 55 * (1 - Math.exp(-t / 20)));
+        const stage =
+          pct < 52 ? "Checking your stems rebuild the master" :
+          pct < 64 ? "Cross-examining your session" :
+          pct < 76 ? "Embedding the inaudible watermark" :
+          pct < 86 ? "Taking the sound fingerprint" :
+          "Signing & timestamping";
+        setProgress({ pct: Math.min(pct, 95), stage });
+      }, 400);
+      const sealRes = await fetch(`${API}/records/${draft.record_id}/seal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const body = await sealRes.json();
+      if (!sealRes.ok) throw new Error(body.detail || "sealing failed");
       setProgress({ pct: 100, stage: "Sealed" });
       setRecord(body);
     } catch (err) {
