@@ -41,9 +41,11 @@ async function walkEntry(entry, prefix, out) {
 function Mark() {
   return (
     <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true">
-      <rect width="64" height="64" rx="14" fill="#12151b" />
-      <path d="M32 31 Q32 20 41 20 Q50 20 50 31 L50 46" fill="none" stroke="#4d7eff" strokeWidth="7" strokeLinecap="round" />
-      <path d="M14 46 L14 31 Q14 20 23 20 Q32 20 32 31 L32 46" fill="none" stroke="#f2f3f5" strokeWidth="7" strokeLinecap="round" />
+      <path
+        fill="#4d7eff"
+        fillRule="evenodd"
+        d="M32 3.00A29.00 29.00 0 1 1 31.99 3.00ZM32 20.00A12.00 12.00 0 1 1 31.99 20.00ZM54.12 35.50A22.40 22.40 0 0 1 32.39 54.40L32.29 48.40A16.40 16.40 0 0 0 48.20 34.57Z"
+      />
     </svg>
   );
 }
@@ -344,7 +346,7 @@ export default function ArtistApp() {
       <div className="wz-top">
         <a className="ld-mark" href="/" style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none", color: "var(--text)", fontWeight: 700, fontSize: "0.9rem" }}>
           <Mark />
-          MotherTape
+          <span>Session<b style={{ fontWeight: 800 }}>Seal</b></span>
         </a>
         <div className="links">
           <AuthButton />

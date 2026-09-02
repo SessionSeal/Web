@@ -38,7 +38,7 @@ function SignIn() {
       <aside className="si-brand" aria-hidden="true">
         <a className="ld-mark si-mark" href="/">
           <Mark />
-          MotherTape
+          <span>Session<b style={{ fontWeight: 800 }}>Seal</b></span>
         </a>
         <div className="si-brand-middle">
           <h1 className="si-headline">
@@ -62,7 +62,7 @@ function SignIn() {
 
       <main className="si-form">
         <div className="si-card">
-          <h2>Welcome to MotherTape</h2>
+          <h2>Welcome to SessionSeal</h2>
           <p className="si-sub">
             Sign in to seal, verify, and manage your records.
           </p>

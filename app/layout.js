@@ -2,7 +2,7 @@ import "./globals.css";
 import Providers from "./providers";
 
 export const metadata = {
-  title: "MotherTape — prove your music is yours",
+  title: "SessionSeal — prove your music is yours",
   description:
     "Seal a master, stems, and session into a tamper-evident signed record; link any future copy back to it.",
 };
