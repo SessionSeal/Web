@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { AuthButton } from "./components";
 
 function Scribble({ children }) {
   return (
@@ -103,7 +102,6 @@ export default function Landing() {
             <a href="#how">How it works</a>
             <a href="#checkers">Checkers</a>
           </div>
-          <AuthButton />
           <a className="ld-pill" href="/app">
             Open the app →
           </a>
