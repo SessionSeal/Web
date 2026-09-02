@@ -347,7 +347,6 @@ export default function ArtistApp() {
           MotherTape
         </a>
         <div className="links">
-          <a href="/">← Back to site</a>
           <AuthButton />
         </div>
       </div>

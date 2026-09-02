@@ -70,6 +70,8 @@ export function Drop({ filled, big, small, onClick, onFiles }) {
 
 export function AuthButton() {
   const { data: session, status } = useSession();
+  const [open, setOpen] = useState(false);
+
   if (status === "loading") return null;
   if (!session?.user) {
     return (
@@ -82,19 +84,60 @@ export function AuthButton() {
     );
   }
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-      {session.user.image && (
-        <img src={session.user.image} alt="" width={26} height={26}
-          style={{ borderRadius: "50%" }} referrerPolicy="no-referrer" />
-      )}
-      <span style={{ fontSize: "0.84rem", fontWeight: 600 }}>
-        {session.user.name || session.user.email}
-      </span>
-      <button onClick={() => signOut()}
-        style={{ background: "none", border: "none", color: "var(--muted)",
-                 cursor: "pointer", font: "inherit", fontSize: "0.78rem" }}>
-        Sign out
+    <span style={{ position: "relative", display: "inline-flex" }}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false);
+      }}>
+      <button onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu" aria-expanded={open}
+        style={{ display: "inline-flex", alignItems: "center", gap: 9,
+                 background: "none", border: "none", cursor: "pointer",
+                 font: "inherit", color: "var(--text)", padding: 0 }}>
+        {session.user.image ? (
+          <img src={session.user.image} alt="" width={28} height={28}
+            style={{ borderRadius: "50%" }} referrerPolicy="no-referrer" />
+        ) : (
+          <span style={{ width: 28, height: 28, borderRadius: "50%",
+                         background: "var(--accent)", color: "#fff",
+                         display: "inline-flex", alignItems: "center",
+                         justifyContent: "center", fontSize: "0.8rem",
+                         fontWeight: 700 }}>
+            {(session.user.name || session.user.email || "?")[0].toUpperCase()}
+          </span>
+        )}
+        <span style={{ fontSize: "0.84rem", fontWeight: 600 }}>
+          {session.user.name || session.user.email}
+        </span>
+        <span aria-hidden="true" style={{ color: "var(--muted)", fontSize: "0.6rem" }}>▾</span>
       </button>
+      {open && (
+        <div role="menu" style={{
+          position: "absolute", top: "calc(100% + 10px)", right: 0,
+          minWidth: 210, background: "var(--panel)",
+          border: "1px solid var(--border-strong)", borderRadius: 12,
+          padding: 6, zIndex: 80,
+          boxShadow: "0 16px 40px rgba(0,0,0,0.5)" }}>
+          {session.user.email && (
+            <div style={{ padding: "8px 12px", fontSize: "0.78rem",
+                          color: "var(--muted)",
+                          borderBottom: "1px solid var(--border)",
+                          marginBottom: 4, overflow: "hidden",
+                          textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {session.user.email}
+            </div>
+          )}
+          <button role="menuitem" onClick={() => signOut({ callbackUrl: "/" })}
+            style={{ display: "block", width: "100%", textAlign: "left",
+                     background: "none", border: "none", cursor: "pointer",
+                     font: "inherit", fontSize: "0.86rem",
+                     color: "var(--text)", padding: "9px 12px",
+                     borderRadius: 8 }}
+            onMouseEnter={(e) => e.currentTarget.style.background = "var(--panel-2)"}
+            onMouseLeave={(e) => e.currentTarget.style.background = "none"}>
+            Sign out
+          </button>
+        </div>
+      )}
     </span>
   );
 }
