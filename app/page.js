@@ -101,7 +101,6 @@ export default function Landing() {
           <div className="ld-nav-links">
             <a href="#how">How it works</a>
             <a href="#checkers">Checkers</a>
-            <a href="/poc">POC console</a>
           </div>
           <a className="ld-pill" href="/app">
             Open the app →
@@ -335,9 +334,7 @@ export default function Landing() {
             <div className="ld-footer-col">
               <h3>Product</h3>
               <a href="/app">Register a track</a>
-              <a href="/distributor">For distributors</a>
               <a href="#how">How it works</a>
-              <a href="/poc">POC console</a>
             </div>
             <div className="ld-footer-col">
               <h3>Verify</h3>

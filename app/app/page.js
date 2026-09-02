@@ -345,7 +345,6 @@ export default function ArtistApp() {
         </a>
         <div className="links">
           <a href="/">← Back to site</a>
-          <a href="/poc">POC console</a>
         </div>
       </div>
 
@@ -772,9 +771,6 @@ export default function ArtistApp() {
               }}>
                 Seal another track
               </button>
-              <a className="navlink" href="/poc" style={{ alignSelf: "center", marginLeft: "auto" }}>
-                Open this flow in the POC console →
-              </a>
             </div>
           </>
         )}
