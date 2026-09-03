@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start -p 3001"
+    "start": "next start -p 3001",
+    "deploy": "npm run build && (pm2 delete web || true) && pm2 start \"npm run start\" --name web && pm2 save"
   },
   "dependencies": {
     "fflate": "^0.8.3",
