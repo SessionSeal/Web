@@ -30,7 +30,7 @@ export default function StemMasterChecker() {
   return (
     <main>
       <p>
-        <a className="navlink" href="/app">← app</a>
+        <a className="navlink" href="/">← app</a>
         {"  ·  "}
         <a className="navlink" href="/logic-master-checker">logic-master checker</a>
       </p>

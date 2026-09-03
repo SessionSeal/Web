@@ -36,7 +36,7 @@ export default function Verify() {
 
   return (
     <div className="wz-shell">
-      <PageTop links={[["Compress a copy", "/compress"], ["Open the app", "/app"]]} />
+      <PageTop links={[["Compress a copy", "/compress"], ["Open the app", "/"]]} />
       <main className="wz-main">
         <h1>Verify a copy.</h1>
         <p className="lede">

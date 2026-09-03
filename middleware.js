@@ -18,7 +18,7 @@ export function middleware(req) {
 
 export const config = {
   matcher: [
-    "/app/:path*", "/app",
+    "/",
     "/verify", "/compress",
     "/stem-master-checker", "/logic-master-checker",
     "/logic", "/fingerprint", "/watermark", "/waterprint",

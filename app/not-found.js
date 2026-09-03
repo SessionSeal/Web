@@ -25,7 +25,7 @@ export default function NotFound() {
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           <a className="ld-pill ghost" href="/">Back to the site</a>
-          <a className="ld-pill" href="/app">Open the app →</a>
+          <a className="ld-pill" href="/">Open the app →</a>
         </div>
       </main>
     </div>

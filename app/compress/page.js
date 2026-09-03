@@ -46,7 +46,7 @@ export default function Compress() {
 
   return (
     <div className="wz-shell">
-      <PageTop links={[["Verify a copy", "/verify"], ["Open the app", "/app"]]} />
+      <PageTop links={[["Verify a copy", "/verify"], ["Open the app", "/"]]} />
       <main className="wz-main">
         <h1>Hear what streaming does to your track.</h1>
         <p className="lede">

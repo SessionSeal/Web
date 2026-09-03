@@ -23,7 +23,7 @@ function GoogleG() {
 
 function safeNext(raw) {
   // relative paths only — never an open redirect
-  return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/app";
+  return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
 }
 
 function SignIn() {

@@ -95,7 +95,7 @@ export default function LogicMasterChecker() {
   return (
     <main>
       <p>
-        <a className="navlink" href="/app">← app</a>
+        <a className="navlink" href="/">← app</a>
         {"  ·  "}
         <a className="navlink" href="/stem-master-checker">stem-master checker</a>
       </p>

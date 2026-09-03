@@ -261,7 +261,7 @@ export default function LogicInspector() {
 
   return (
     <main>
-      <p><a className="navlink" href="/app">← back to the app</a></p>
+      <p><a className="navlink" href="/">← back to the app</a></p>
       <h1>Logic project inspector</h1>
       <p className="subtitle">
         Upload a zipped .logicx package. Everything parseable is extracted and

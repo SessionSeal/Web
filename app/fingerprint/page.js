@@ -156,7 +156,7 @@ export default function FingerprintLab() {
   return (
     <main>
       <p>
-        <a className="navlink" href="/app">← app</a>
+        <a className="navlink" href="/">← app</a>
         {"  ·  "}
         <a className="navlink" href="/logic">logic inspector</a>
       </p>

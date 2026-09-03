@@ -136,7 +136,7 @@ export default function WaterprintLab() {
   return (
     <main>
       <p>
-        <a className="navlink" href="/app">← app</a>
+        <a className="navlink" href="/">← app</a>
         {"  ·  "}
         <a className="navlink" href="/fingerprint">fingerprint lab</a>
         {"  ·  "}
