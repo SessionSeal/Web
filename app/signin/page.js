@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { Mark } from "../components";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
 const WAVE = [22, 38, 56, 44, 30, 52, 66, 48, 34, 26, 42, 60, 72, 58, 40,
   30, 48, 64, 54, 38, 28, 44, 58, 70, 52, 36, 24, 40, 56, 46, 32, 50];
 
@@ -36,7 +38,7 @@ function SignIn() {
   return (
     <div className="si-shell">
       <aside className="si-brand" aria-hidden="true">
-        <a className="ld-mark si-mark" href="/">
+        <a className="ld-mark si-mark" href={SITE_URL}>
           <Mark />
           <span>Session<b style={{ fontWeight: 800 }}>Seal</b></span>
         </a>
@@ -77,7 +79,7 @@ function SignIn() {
             coherence, and priority — never authorship.
           </p>
         </div>
-        <a className="si-back" href="/">← Back to the site</a>
+        <a className="si-back" href={SITE_URL}>← Back to the site</a>
       </main>
     </div>
   );
