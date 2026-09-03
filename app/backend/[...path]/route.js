@@ -5,7 +5,9 @@
 // of MB, and the truncation left the backend waiting forever). A route
 // handler receives the body as a stream and pipes it straight through.
 
-const BACKEND = "http://127.0.0.1:8000";
+// Server-side env, read at runtime (no NEXT_PUBLIC_, never reaches the
+// browser). Default assumes Heimdall co-located on this machine.
+const BACKEND = process.env.HEIMDALL_URL || "http://127.0.0.1:8000";
 
 async function proxy(req, ctx) {
   const { path = [] } = await ctx.params;
