@@ -95,9 +95,34 @@ export default function RecordPage() {
             </div>
 
             <div className="db-rec-when">
-              Sealed <b>{fmtDateTime(rec.sealed_at || rec.created_at)}</b> ·
+              {sealed
+                ? <>Sealed <b>{fmtDateTime(rec.sealed_at || rec.created_at)}</b> · </>
+                : <>Started <b>{fmtDateTime(rec.created_at)}</b> · </>}
               record <span className="wz-mono">{rec.id}</span>
             </div>
+
+            {!sealed && (
+              <div className="db-notsealed">
+                {rec.status === "FAILED" || data.status === "FAILED" ? (
+                  <>
+                    <p>This seal didn't complete.</p>
+                    {data.error && <p className="err">{data.error}</p>}
+                    <a className="wz-btn" href="/seal">Try sealing again →</a>
+                  </>
+                ) : rec.status === "DRAFT" ? (
+                  <>
+                    <p>
+                      This record was started but never finished sealing — the
+                      upload didn't complete.
+                    </p>
+                    <a className="wz-btn" href="/seal">Start a new seal →</a>
+                  </>
+                ) : (
+                  <p>Sealing in progress… this page will show the full record
+                    once it's done.</p>
+                )}
+              </div>
+            )}
 
             {sealed && (
               <ul className="wz-checklist db-rec-list">

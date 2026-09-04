@@ -57,7 +57,10 @@ export default function Dashboard() {
     return () => { cancelled = true; };
   }, []);
 
-  const sealed = (records || []).filter((r) => r.status === "SEALED");
+  // Show sealed records and any that are actively sealing/failed; hide
+  // abandoned DRAFTs (uploads that never finished — noise, not catalog).
+  const visible = (records || []).filter((r) => r.status !== "DRAFT");
+  const sealed = visible.filter((r) => r.status === "SEALED");
   const firstSeal = sealed.length
     ? sealed[sealed.length - 1].sealed_at || sealed[sealed.length - 1].created_at
     : null;
@@ -84,7 +87,7 @@ export default function Dashboard() {
           <div className="db-loading">Loading your records…</div>
         )}
 
-        {records !== null && records.length === 0 && (
+        {records !== null && visible.length === 0 && (
           <div className="db-empty">
             <h1>Nothing sealed yet.</h1>
             <p>
@@ -96,7 +99,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {records !== null && records.length > 0 && (
+        {records !== null && visible.length > 0 && (
           <>
             <div className="db-stats">
               <div className="db-stat">
@@ -114,7 +117,7 @@ export default function Dashboard() {
             </div>
 
             <div className="db-list">
-              {records.map((r) => (
+              {visible.map((r) => (
                 <a className="db-card" key={r.id} href={`/records/${r.id}`}>
                   <div className="db-card-head">
                     <div className="db-card-title">
