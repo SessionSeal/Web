@@ -88,14 +88,84 @@ export default function Dashboard() {
         )}
 
         {records !== null && visible.length === 0 && (
-          <div className="db-empty">
-            <h1>Nothing sealed yet.</h1>
-            <p>
-              Upload your master, stems, and session once. Your track gets a
-              sealed, timestamped record — proof that exists before anyone
-              questions you.
-            </p>
-            <a className="db-newpill big" href="/seal">Seal your first track →</a>
+          <div className="db-onboard">
+            <section className="db-hero">
+              <h1>Your catalog starts here.</h1>
+              <p>
+                Seal a track once — your master, your stems, your session —
+                and you get a timestamped record that proves the work is
+                yours. Before anyone questions it.
+              </p>
+              <a className="db-newpill big" href="/seal">Seal your first track →</a>
+              <p className="db-hero-fine">Takes about a minute per track.</p>
+            </section>
+
+            <section className="db-how">
+              <h2>How a seal works</h2>
+              <div className="db-steps">
+                <div className="db-step">
+                  <span className="num">1</span>
+                  <b>Upload</b>
+                  <p>Your finished master, your stems, and your session file — dropped in once.</p>
+                </div>
+                <div className="db-step">
+                  <span className="num">2</span>
+                  <b>Verify</b>
+                  <p>We check the parts belong together — your stems have to rebuild your master.</p>
+                </div>
+                <div className="db-step">
+                  <span className="num">3</span>
+                  <b>Seal</b>
+                  <p>It's watermarked, fingerprinted, and cryptographically signed with a timestamp.</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="db-ways">
+              <h2>Three ways a copy finds its way home</h2>
+              <div className="db-waycards">
+                <div className="db-way">
+                  <div className="glyph">◌</div>
+                  <b>An inaudible watermark</b>
+                  <p>Hidden in the audio itself, below hearing — it survives compression and follows every copy.</p>
+                </div>
+                <div className="db-way">
+                  <div className="glyph">≈</div>
+                  <b>An acoustic fingerprint</b>
+                  <p>Recognizes your track by how it sounds, even a damaged or chopped-up copy.</p>
+                </div>
+                <div className="db-way">
+                  <div className="glyph">§</div>
+                  <b>A cryptographic signature</b>
+                  <p>An unforgeable, timestamped seal. Change one sample and it breaks.</p>
+                </div>
+              </div>
+            </section>
+
+            <section className="db-preview" aria-hidden="true">
+              <div className="db-preview-label">This is what a sealed record looks like</div>
+              <div className="db-card sample">
+                <div className="db-card-head">
+                  <div className="db-card-title">
+                    <b>Your next track</b>
+                    <span className="artist">you</span>
+                  </div>
+                  <span className="db-chip ok">Sealed</span>
+                </div>
+                <div className="db-card-when">Sealed just now</div>
+                <div className="db-card-badges">
+                  <span className="mini ok">✓ stems rebuild 96%</span>
+                  <span className="mini ok">session: strong</span>
+                  <span className="mini ok">✓ watermarked</span>
+                  <span className="mini ok">✓ signed</span>
+                </div>
+              </div>
+            </section>
+
+            <div className="db-verify-cta">
+              Already released something and want to check a copy?{" "}
+              <a href="/verify">Verify it →</a>
+            </div>
           </div>
         )}
 

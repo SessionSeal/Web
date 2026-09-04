@@ -641,10 +641,6 @@ export default function ArtistApp() {
                 {record.created_at_utc} · record{" "}
                 <span className="wz-mono">{record.record_id}</span>
               </div>
-              <a className="wz-btn ghost" href={`/records/${record.record_id}`}
-                style={{ marginTop: 14, display: "inline-block" }}>
-                View in your records →
-              </a>
             </div>
 
             <ul className="wz-checklist">

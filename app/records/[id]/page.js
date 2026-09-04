@@ -31,7 +31,6 @@ export default function RecordPage() {
   const [data, setData] = useState(null);
   const [verifs, setVerifs] = useState(null);
   const [error, setError] = useState(null);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -54,14 +53,6 @@ export default function RecordPage() {
 
   const rec = data?.record;
   const sealed = rec?.status === "SEALED";
-
-  function copyManifest() {
-    if (!rec?.manifest_public_url) return;
-    navigator.clipboard.writeText(rec.manifest_public_url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    }).catch(() => {});
-  }
 
   return (
     <div className="wz-shell">
@@ -177,9 +168,10 @@ export default function RecordPage() {
                   Download signed master
                 </a>
                 {rec.manifest_public_url && (
-                  <button className="wz-btn ghost" onClick={copyManifest}>
-                    {copied ? "Copied ✓" : "Copy public manifest link"}
-                  </button>
+                  <a className="wz-btn ghost" href={rec.manifest_public_url}
+                    target="_blank" rel="noopener noreferrer">
+                    View manifest
+                  </a>
                 )}
               </div>
             )}
