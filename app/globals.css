@@ -1847,3 +1847,119 @@ button:focus-visible,
   color: var(--muted); text-decoration: none; font-size: 0.85rem;
 }
 .si-back:hover { color: var(--text); }
+
+/* ---------------------------------------------------------------- dashboard */
+
+.wz-chips {
+  display: flex; align-items: center; gap: 8px;
+  margin: -6px 0 16px; flex-wrap: wrap;
+  font-size: 0.8rem; color: var(--muted);
+}
+.wz-chip {
+  border: 1px solid var(--border-strong); background: var(--panel);
+  color: var(--text); border-radius: 999px; padding: 4px 12px;
+  font-size: 0.8rem; cursor: pointer; font-family: inherit;
+}
+.wz-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+.db-main { max-width: 860px; margin: 0 auto; padding: 36px 24px 80px; }
+.db-loading, .db-error { color: var(--muted); padding: 48px 0; text-align: center; }
+.db-error { color: var(--warn); }
+
+.db-newpill {
+  border: 1px solid var(--border-strong); border-radius: 999px;
+  padding: 7px 16px; text-decoration: none; color: var(--text);
+  font-size: 0.85rem; font-weight: 600; white-space: nowrap;
+}
+.db-newpill:hover { border-color: var(--accent); color: var(--accent); }
+.db-newpill.big {
+  display: inline-block; margin-top: 22px; background: var(--text);
+  color: var(--bg); border: none; padding: 12px 24px; font-size: 0.95rem;
+}
+.db-newpill.big:hover { background: var(--accent); color: #fff; }
+
+.db-empty { text-align: center; padding: 90px 0; }
+.db-empty h1 {
+  font-family: "Instrument Serif", Georgia, serif; font-weight: 400;
+  font-size: clamp(2rem, 5vw, 2.8rem); margin-bottom: 12px;
+}
+.db-empty p { color: var(--muted); max-width: 440px; margin: 0 auto; line-height: 1.7; }
+
+.db-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  margin-bottom: 30px;
+}
+.db-stat {
+  border: 1px solid var(--border); border-radius: 14px;
+  background: var(--panel); padding: 18px 20px;
+}
+.db-stat .n {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: 1.7rem; line-height: 1.2;
+}
+.db-stat .l { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+
+.db-list { display: flex; flex-direction: column; gap: 12px; }
+.db-card {
+  display: block; border: 1px solid var(--border); border-radius: 14px;
+  background: var(--panel); padding: 18px 20px; text-decoration: none;
+  color: var(--text); transition: border-color 0.15s;
+}
+.db-card:hover { border-color: var(--border-strong); }
+.db-card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.db-card-title b { font-size: 1.02rem; }
+.db-card-title .artist { color: var(--muted); font-size: 0.88rem; margin-left: 10px; }
+.db-card-when { color: var(--muted); font-size: 0.8rem; margin-top: 6px; }
+.db-card-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.db-card-badges .mini {
+  font-size: 0.72rem; color: var(--muted);
+  border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px;
+}
+.db-card-badges .mini.ok { color: var(--ok); border-color: rgba(74, 222, 128, 0.25); }
+.db-card-badges .mini.hot { color: var(--accent); border-color: rgba(77, 126, 255, 0.35); }
+
+.db-chip {
+  font-size: 0.72rem; font-weight: 700; border-radius: 999px;
+  padding: 4px 12px; white-space: nowrap;
+}
+.db-chip.ok { color: var(--ok); background: rgba(74, 222, 128, 0.12); }
+.db-chip.bad { color: var(--warn); background: rgba(248, 113, 113, 0.12); }
+.db-chip.busy { color: var(--accent); background: var(--accent-soft); }
+
+.db-verify-cta {
+  margin-top: 34px; text-align: center; color: var(--muted); font-size: 0.88rem;
+}
+.db-verify-cta a { color: var(--accent); text-decoration: none; }
+
+.db-back {
+  display: inline-block; color: var(--muted); text-decoration: none;
+  font-size: 0.85rem; margin-bottom: 24px;
+}
+.db-back:hover { color: var(--text); }
+.db-rec-head { display: flex; justify-content: space-between; align-items: start; gap: 14px; }
+.db-rec-head h1 {
+  font-family: "Instrument Serif", Georgia, serif; font-weight: 400;
+  font-size: clamp(1.8rem, 4vw, 2.4rem); line-height: 1.15;
+}
+.db-rec-head .artist { color: var(--muted); margin-top: 4px; }
+.db-rec-when { color: var(--muted); font-size: 0.85rem; margin: 14px 0 22px; }
+.db-rec-list { margin-bottom: 26px; }
+.db-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 40px; }
+
+.db-verifs h2 {
+  font-size: 1rem; font-weight: 700; margin-bottom: 12px;
+  padding-top: 22px; border-top: 1px solid var(--border);
+}
+.db-verifs .muted { color: var(--muted); font-size: 0.88rem; line-height: 1.7; }
+.db-verif-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.db-verif-list li { color: var(--muted); font-size: 0.88rem; }
+.db-verif-list li b { color: var(--text); }
+.db-verif-list .dot {
+  display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--ok); margin-right: 9px;
+}
+
+@media (max-width: 640px) {
+  .db-stats { grid-template-columns: 1fr; }
+  .db-card-head { flex-direction: column; align-items: start; }
+}
