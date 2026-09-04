@@ -68,7 +68,7 @@ export default function Dashboard() {
     .reduce((n, r) => n + (r.times_verified || 0), 0);
 
   return (
-    <div className="wz-shell">
+    <div className="wz-shell db-shell">
       <div className="wz-top">
         <a className="ld-mark" href="/" style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none", color: "var(--text)", fontWeight: 700, fontSize: "0.9rem" }}>
           <Mark />
@@ -97,7 +97,6 @@ export default function Dashboard() {
                 yours. Before anyone questions it.
               </p>
               <a className="db-newpill big" href="/seal">Seal your first track →</a>
-              <p className="db-hero-fine">Takes about a minute per track.</p>
             </section>
 
             <section className="db-how">

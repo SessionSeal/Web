@@ -1986,9 +1986,10 @@ button:focus-visible,
   color: var(--muted); max-width: 500px; margin: 0 auto 26px;
   line-height: 1.7; font-size: 1.02rem;
 }
-.db-hero-fine { color: var(--muted); font-size: 0.8rem; margin-top: 14px; }
 
-.db-onboard section { padding: 34px 0; border-top: 1px solid var(--border); }
+.db-onboard section { padding: 34px 0; }
+.db-onboard section + section { border-top: 1px solid var(--border); }
+.db-hero { border-top: none; }
 .db-onboard section h2 {
   font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
   color: var(--muted); font-weight: 600; margin-bottom: 22px; text-align: center;
@@ -2027,3 +2028,21 @@ button:focus-visible,
 @media (max-width: 640px) {
   .db-steps, .db-waycards { grid-template-columns: 1fr; }
 }
+
+/* dashboard: landing-style top glow, no hairline under the nav */
+.db-shell { position: relative; overflow-x: hidden; }
+.db-shell::before {
+  content: "";
+  position: absolute;
+  inset: -120px 0 auto 0;
+  height: 620px;
+  background: radial-gradient(
+    ellipse 60% 55% at 50% 12%,
+    rgba(45, 80, 190, 0.28),
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+.db-shell .wz-top { border-bottom: none; position: relative; z-index: 1; }
+.db-shell .db-main { position: relative; z-index: 1; }
