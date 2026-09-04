@@ -2059,10 +2059,11 @@ button:focus-visible,
 }
 .db-welcome p { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
 
-/* high-visibility nav CTA — matches the Astro landing's .ld-pill */
-.db-newpill.primary {
+/* high-visibility nav CTA — matches the Astro landing's .ld-pill.
+   Scoped under .wz-top .links to beat that rule's grey `color: var(--muted)`. */
+.wz-top .links a.db-newpill.primary {
   background: #fff; color: #0b0d11; border-color: #fff; font-weight: 700;
 }
-.db-newpill.primary:hover {
+.wz-top .links a.db-newpill.primary:hover {
   background: #dfe6ff; color: #0b0d11; border-color: #dfe6ff;
 }
