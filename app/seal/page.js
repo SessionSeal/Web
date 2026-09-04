@@ -365,7 +365,7 @@ export default function ArtistApp() {
   const so = record?.same_origin;
 
   return (
-    <div className="wz-shell">
+    <div className="wz-shell db-shell">
       <div className="wz-top">
         <a className="ld-mark" href="/" style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none", color: "var(--text)", fontWeight: 700, fontSize: "0.9rem" }}>
           <Mark />

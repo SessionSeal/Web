@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { AuthButton } from "./components";
+
+function firstName(session) {
+  const n = session?.user?.name || session?.user?.email || "";
+  return n.split(/[\s@]/)[0] || "";
+}
 
 const API = "/backend";
 
@@ -42,8 +48,10 @@ function StatusChip({ status }) {
 }
 
 export default function Dashboard() {
+  const { data: session } = useSession();
   const [records, setRecords] = useState(null);
   const [error, setError] = useState(null);
+  const name = firstName(session);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,7 +83,7 @@ export default function Dashboard() {
           <span>Session<b style={{ fontWeight: 800 }}>Seal</b></span>
         </a>
         <div className="links">
-          <a className="db-newpill" href="/seal">Seal a new track →</a>
+          <a className="db-newpill primary" href="/seal">Seal a new track →</a>
           <AuthButton />
         </div>
       </div>
@@ -90,6 +98,7 @@ export default function Dashboard() {
         {records !== null && visible.length === 0 && (
           <div className="db-onboard">
             <section className="db-hero">
+              {name && <p className="db-greeting">Hi {name} 👋</p>}
               <h1>Your catalog starts here.</h1>
               <p>
                 Seal a track once — your master, your stems, your session —
@@ -170,6 +179,12 @@ export default function Dashboard() {
 
         {records !== null && visible.length > 0 && (
           <>
+            {name && (
+              <div className="db-welcome">
+                <h1>Hi {name} 👋</h1>
+                <p>Here's everything you've sealed.</p>
+              </div>
+            )}
             <div className="db-stats">
               <div className="db-stat">
                 <div className="n">{sealed.length}</div>

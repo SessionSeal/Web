@@ -2046,3 +2046,24 @@ button:focus-visible,
 }
 .db-shell .wz-top { border-bottom: none; position: relative; z-index: 1; }
 .db-shell .db-main { position: relative; z-index: 1; }
+
+/* greeting */
+.db-greeting {
+  color: var(--accent); font-weight: 600; font-size: 0.95rem;
+  margin-bottom: 14px;
+}
+.db-welcome { margin-bottom: 26px; }
+.db-welcome h1 {
+  font-family: "Instrument Serif", Georgia, serif; font-weight: 400;
+  font-size: clamp(1.9rem, 4.5vw, 2.6rem); line-height: 1.1;
+}
+.db-welcome p { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
+
+/* high-visibility nav CTA */
+.db-newpill.primary {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(77, 126, 255, 0.14);
+}
+.db-newpill.primary:hover {
+  background: #3f6ff0; color: #fff; border-color: #3f6ff0;
+}

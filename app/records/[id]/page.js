@@ -62,7 +62,7 @@ export default function RecordPage() {
           <span>Session<b style={{ fontWeight: 800 }}>Seal</b></span>
         </a>
         <div className="links">
-          <a className="db-newpill" href="/seal">Seal a new track →</a>
+          <a className="db-newpill primary" href="/seal">Seal a new track →</a>
           <AuthButton />
         </div>
       </div>
