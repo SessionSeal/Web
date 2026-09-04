@@ -2061,9 +2061,9 @@ button:focus-visible,
 
 /* high-visibility nav CTA */
 .db-newpill.primary {
-  background: var(--accent); color: #fff; border-color: var(--accent);
-  box-shadow: 0 0 0 4px rgba(77, 126, 255, 0.14);
+  background: var(--text); color: var(--bg); border-color: var(--text);
+  font-weight: 700;
 }
 .db-newpill.primary:hover {
-  background: #3f6ff0; color: #fff; border-color: #3f6ff0;
+  background: #fff; color: #000; border-color: #fff;
 }

@@ -98,7 +98,7 @@ export default function Dashboard() {
         {records !== null && visible.length === 0 && (
           <div className="db-onboard">
             <section className="db-hero">
-              {name && <p className="db-greeting">Hi {name} 👋</p>}
+              {name && <p className="db-greeting">Hi {name}</p>}
               <h1>Your catalog starts here.</h1>
               <p>
                 Seal a track once — your master, your stems, your session —
@@ -181,7 +181,7 @@ export default function Dashboard() {
           <>
             {name && (
               <div className="db-welcome">
-                <h1>Hi {name} 👋</h1>
+                <h1>Hi {name}</h1>
                 <p>Here's everything you've sealed.</p>
               </div>
             )}
