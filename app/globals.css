@@ -2059,11 +2059,10 @@ button:focus-visible,
 }
 .db-welcome p { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
 
-/* high-visibility nav CTA */
+/* high-visibility nav CTA — matches the Astro landing's .ld-pill */
 .db-newpill.primary {
-  background: var(--text); color: var(--bg); border-color: var(--text);
-  font-weight: 700;
+  background: #fff; color: #0b0d11; border-color: #fff; font-weight: 700;
 }
 .db-newpill.primary:hover {
-  background: #fff; color: #000; border-color: #fff;
+  background: #dfe6ff; color: #0b0d11; border-color: #dfe6ff;
 }
