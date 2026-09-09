@@ -2,257 +2,420 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Info } from "../../components";
+import { toast } from "sonner";
+import {
+  ShieldCheck, Lock, FileCheck, Play, Pause, Download, ChevronDown,
+  AudioLines, FolderOpen, ExternalLink, CircleCheck, TriangleAlert, MinusCircle,
+} from "lucide-react";
+import { Info, Mark, Wordmark } from "../../components";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const API = "/backend";
 
-function Mark({ size = 22 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
-      <path fill="#4d7eff" fillRule="evenodd"
-        d="M32 3.00A29.00 29.00 0 1 1 31.99 3.00ZM32 20.00A12.00 12.00 0 1 1 31.99 20.00ZM54.12 35.50A22.40 22.40 0 0 1 32.39 54.40L32.29 48.40A16.40 16.40 0 0 0 48.20 34.57Z" />
-    </svg>
-  );
-}
+// Verdict band -> the accent it paints with. STRONG = green (real work found),
+// MODERATE = brand blue, WEAK = amber, CONTRADICTED = red.
+const BAND_STYLE = {
+  STRONG: {
+    badge: "border-transparent bg-[rgba(74,222,128,0.14)] text-[#4ade80]",
+    glow: "radial-gradient(ellipse 90% 130% at 50% -20%, rgba(74,222,128,0.10), transparent 70%)",
+    ring: "border-[rgba(74,222,128,0.35)]",
+  },
+  MODERATE: {
+    badge: "border-transparent bg-[rgba(77,126,255,0.16)] text-[#7ea0ff]",
+    glow: "radial-gradient(ellipse 90% 130% at 50% -20%, rgba(77,126,255,0.12), transparent 70%)",
+    ring: "border-[rgba(77,126,255,0.35)]",
+  },
+  WEAK: {
+    badge: "border-transparent bg-[rgba(234,179,8,0.14)] text-[#eab308]",
+    glow: "none",
+    ring: "border-[rgba(234,179,8,0.35)]",
+  },
+  CONTRADICTED: {
+    badge: "border-transparent bg-[rgba(248,113,113,0.14)] text-[#f87171]",
+    glow: "none",
+    ring: "border-[rgba(248,113,113,0.4)]",
+  },
+};
+
+const BAND_LABEL = {
+  STRONG: "Strong evidence",
+  MODERATE: "Moderate evidence",
+  WEAK: "Limited evidence",
+  CONTRADICTED: "Inconsistent",
+};
+
+// Methodology check result -> icon + color.
+const RESULT_META = {
+  match: { Icon: CircleCheck, cls: "text-[#4ade80]", label: "Match" },
+  contradiction: { Icon: TriangleAlert, cls: "text-[#f87171]", label: "Contradiction" },
+  not_evaluable: { Icon: MinusCircle, cls: "text-muted-foreground", label: "Not evaluable" },
+};
 
 function fmtDate(iso) {
-  if (!iso) return "—";
+  if (!iso) return "unknown date";
   return new Date(iso).toLocaleString("en-GB", {
     day: "numeric", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit",
   });
 }
 
-const VERDICT_CLASS = { STRONG: "ok", MODERATE: "mid", WEAK: "warn", CONTRADICTED: "bad" };
+// The reviewer-facing top bar: same brand lockup as the app, but no auth and
+// no "seal a track" CTA (the reviewer is anonymous). A trust chip on the right
+// reinforces that this is a verified record rather than a marketing page.
+function ReviewerTop({ verified = false }) {
+  return (
+    <div className="wz-top">
+      <a className="ld-mark" href="/"
+        style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none", color: "var(--text)", fontWeight: 500, fontSize: "0.9rem" }}>
+        <Mark />
+        <Wordmark />
+      </a>
+      {verified && (
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground">
+          <Lock className="size-3.5 text-[#4ade80]" />
+          Verified record
+        </span>
+      )}
+    </div>
+  );
+}
+
+// One stem row with an inline player. Fetches a short-lived signed URL on first
+// play; the audio element is download-disabled (previews are throwaway).
+function StemRow({ token, asset, email }) {
+  const [url, setUrl] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  async function load() {
+    setBusy(true);
+    try {
+      const res = await fetch(`${API}/shares/${token}/asset-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ asset_id: asset.asset_id, email: email || null }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.detail || "This stem is not available.");
+      setUrl(body.url);
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-secondary px-4 py-3">
+      <AudioLines className="size-4 shrink-0 text-muted-foreground" />
+      <span className="min-w-0 flex-1 truncate text-sm">{asset.filename}</span>
+      {url ? (
+        <audio controls controlsList="nodownload" src={url} className="h-9 max-w-[220px]" />
+      ) : (
+        <Button size="sm" variant="outline" disabled={busy} onClick={load} className="shrink-0 gap-1.5">
+          <Play className="size-3.5" /> {busy ? "Loading" : "Listen"}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function SessionRow({ token, asset, email }) {
+  const [busy, setBusy] = useState(false);
+  async function download() {
+    setBusy(true);
+    try {
+      const res = await fetch(`${API}/shares/${token}/asset-url`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ asset_id: asset.asset_id, email: email || null }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.detail || "This file is not available.");
+      window.location.href = body.url;
+    } catch (e) {
+      toast.error(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-secondary px-4 py-3">
+      <FolderOpen className="size-4 shrink-0 text-muted-foreground" />
+      <span className="min-w-0 flex-1 truncate text-sm">{asset.filename}<span className="text-muted-foreground"> (full session)</span></span>
+      <Button size="sm" variant="outline" disabled={busy} onClick={download} className="shrink-0 gap-1.5">
+        <Download className="size-3.5" /> {busy ? "Preparing" : "Download"}
+      </Button>
+    </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="wz-shell db-shell">
+      <ReviewerTop />
+      <main className="mx-auto w-full max-w-[720px] px-6 pb-24 pt-8" aria-hidden="true">
+        <Skeleton className="h-[190px] w-full rounded-[18px]" />
+        <Skeleton className="mt-4 h-16 w-full rounded-xl" />
+        <Skeleton className="mt-7 h-6 w-72 rounded" />
+        <Skeleton className="mt-4 h-24 w-full rounded-xl" />
+        <Skeleton className="mt-3 h-24 w-full rounded-xl" />
+      </main>
+    </div>
+  );
+}
+
+function MessageState({ title, body }) {
+  return (
+    <div className="wz-shell db-shell">
+      <ReviewerTop />
+      <main className="mx-auto flex w-full max-w-[460px] flex-col items-center px-6 pt-24 text-center">
+        <Mark />
+        <h1 className="mt-4 font-serif text-3xl font-normal">{title}</h1>
+        <p className="mt-2 leading-relaxed text-muted-foreground">{body}</p>
+      </main>
+    </div>
+  );
+}
 
 export default function ReviewerPage() {
   const { token } = useParams();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [email, setEmail] = useState("");
-  const [emailSaved, setEmailSaved] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
   const [methodOpen, setMethodOpen] = useState(false);
-  const [busyAsset, setBusyAsset] = useState(null);
-  const [streamUrl, setStreamUrl] = useState({}); // assetId -> url
 
   const emailKey = `ss-share-email:${token}`;
 
-  // Re-check access on every mount — DB is the source of truth. A revoked or
-  // tier-changed share reflects immediately on reload.
+  // Re-check access on every mount: the DB is the source of truth, so a revoked
+  // or tier-changed share is reflected the moment the reviewer reloads.
   useEffect(() => {
     if (!token) return;
+    let cancelled = false;
     let saved = "";
     try { saved = localStorage.getItem(emailKey) || ""; } catch {}
-    if (saved) { setEmail(saved); setEmailSaved(true); }
+    if (saved) { setEmail(saved); setEmailInput(saved); }
     const q = saved ? `?email=${encodeURIComponent(saved)}` : "";
     fetch(`${API}/shares/${token}${q}`)
       .then((r) => {
         if (!r.ok) throw new Error(r.status === 404
-          ? "This link is no longer active. The musician may have revoked it or it has expired."
-          : "Couldn't load this record.");
+          ? "This link is no longer active. The musician may have revoked it, or it has expired."
+          : "We couldn't load this record. Please try again shortly.");
         return r.json();
       })
-      .then(setData)
-      .catch((e) => setError(e.message));
+      .then((d) => { if (!cancelled) setData(d); })
+      .catch((e) => { if (!cancelled) setError(e.message); });
+    return () => { cancelled = true; };
   }, [token]);
 
   function saveEmail(e) {
     e.preventDefault();
-    if (!email.trim()) return;
-    try { localStorage.setItem(emailKey, email.trim()); } catch {}
-    setEmailSaved(true);
+    const v = emailInput.trim();
+    if (!v) return;
+    try { localStorage.setItem(emailKey, v); } catch {}
+    setEmail(v);
+    toast.success("Access unlocked");
   }
 
-  async function getAsset(assetId, kind) {
-    setBusyAsset(assetId);
-    try {
-      const res = await fetch(`${API}/shares/${token}/asset-url`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ asset_id: assetId, email: email.trim() || null }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.detail || "unavailable");
-      if (body.download) {
-        window.location.href = body.url; // session zip download
-      } else {
-        setStreamUrl((s) => ({ ...s, [assetId]: body.url })); // stem: inline player
-      }
-    } catch (e) {
-      alert(e.message);
-    } finally {
-      setBusyAsset(null);
-    }
-  }
-
-  if (error) {
-    return (
-      <div className="rv-shell"><div className="rv-card rv-msg">
-        <Mark size={30} /><h1>Link unavailable</h1><p>{error}</p>
-      </div></div>
-    );
-  }
-  if (!data) return <div className="rv-shell"><div className="rv-card rv-msg">Loading…</div></div>;
+  if (error) return <MessageState title="Link unavailable" body={error} />;
+  if (!data) return <LoadingState />;
 
   const { report, tiers, assets } = data;
   const v = report.verdict;
-  const vclass = VERDICT_CLASS[v.band] || "warn";
+  const band = v.band || "WEAK";
+  const style = BAND_STYLE[band] || BAND_STYLE.WEAK;
   const canStems = tiers.includes("STEM_PREVIEW");
   const canSession = tiers.includes("SESSION");
-  const stems = assets.filter((a) => a.kind === "STEM");
-  const session = assets.filter((a) => a.kind === "PROJECT");
+  const stems = (assets || []).filter((a) => a.kind === "STEM");
+  const session = (assets || []).filter((a) => a.kind === "PROJECT");
+  const showAssets = (canStems || canSession) && (stems.length > 0 || session.length > 0);
+  const emailUnlocked = !!email;
 
   return (
-    <div className="rv-shell">
-      <div className="rv-top">
-        <span className="rv-brand"><Mark /> Session<b>Seal</b></span>
-        <span className="rv-top-note">Independent verification report</span>
-      </div>
+    <div className="wz-shell db-shell">
+      <ReviewerTop verified />
 
-      <main className="rv-main">
-        {/* LAYER 1 — the verdict, in plain words */}
-        <section className={`rv-verdict ${vclass}`}>
-          <div className="rv-badge">{v.band}</div>
-          <h1>{v.headline}</h1>
-          <p>{v.summary}</p>
-          <div className="rv-meta">
-            <span><b>{report.title}</b> — {report.artist}</span>
-            <span>Sealed {fmtDate(report.sealed_at)}
-              <Info text="The date SessionSeal cryptographically locked this record. Because it was sealed before any dispute, the evidence cannot have been fabricated after the fact." />
+      <main className="mx-auto w-full max-w-[720px] px-6 pb-24 pt-8">
+        {/* LAYER 1 - the verdict, in plain words */}
+        <section
+          className={`rounded-[18px] border ${style.ring} p-7`}
+          style={{ background: `${style.glow}, var(--panel)` }}>
+          <Badge className={`mb-3.5 rounded-full px-3 py-1 text-[0.7rem] font-bold tracking-wide ${style.badge}`}>
+            {BAND_LABEL[band] || band}
+          </Badge>
+          <h1 className="font-serif text-[clamp(1.8rem,4.5vw,2.5rem)] font-normal leading-[1.12]">
+            {v.headline}
+          </h1>
+          <p className="mt-3 leading-relaxed text-muted-foreground">{v.summary}</p>
+          <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-1.5 border-t border-border pt-4 text-sm text-muted-foreground">
+            <span><b className="text-foreground">{report.title}</b> by {report.artist}</span>
+            <span className="inline-flex items-center">
+              Sealed {fmtDate(report.sealed_at)}
+              <Info text="The date SessionSeal cryptographically locked this record. Because it was sealed before any dispute arose, the evidence cannot have been fabricated after the fact." />
             </span>
           </div>
         </section>
 
-        {/* Integrity line */}
-        <section className="rv-integrity">
-          <span className="tick">🔒</span>
-          <p>
-            Cryptographically sealed & unaltered since {fmtDate(report.sealed_at)}.
+        {/* Integrity strip */}
+        <section className="mt-4 flex items-start gap-3 rounded-xl border border-border bg-secondary px-4 py-3.5 text-sm text-muted-foreground">
+          <Lock className="mt-0.5 size-4 shrink-0 text-[#4ade80]" />
+          <p className="leading-relaxed">
+            Cryptographically sealed and unaltered since {fmtDate(report.sealed_at)}.
             <Info text={report.integrity.note} />
             {report.integrity.manifest_url && (
-              <> · <a href={report.integrity.manifest_url} target="_blank" rel="noopener noreferrer">
-                View the signed record</a>
-                <Info text="The public, tamper-evident record (a C2PA Content Credential) — the same standard Adobe, cameras, and streaming platforms use to verify content origin." />
+              <>
+                {" "}
+                <a href={report.integrity.manifest_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-brand hover:underline">
+                  View the signed record <ExternalLink className="size-3" />
+                </a>
+                <Info text="The public, tamper-evident record (a C2PA Content Credential) uses the same standard Adobe, camera makers, and streaming platforms use to verify where content came from." />
               </>
             )}
           </p>
         </section>
 
-        {/* LAYER 2 — the evidence, explained */}
-        <section className="rv-evidence">
-          <h2>Why this looks like real studio work</h2>
-          <p className="rv-sub">
-            Each point below is something an AI-generated track cannot produce.
-            Hover any <span className="q">?</span> for what it means.
+        {/* LAYER 2 - the evidence, explained */}
+        <section className="mt-8">
+          <h2 className="text-lg font-bold">Why this looks like real studio work</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Each point below is something an AI-generated track cannot produce. The
+            <Info text="Hover the (i) beside any point to see, in plain language, exactly what was checked and why it matters." /> beside a point explains what it means.
           </p>
-          {report.evidence.length === 0 && (
-            <p className="rv-sub">No individual studio-work signals were confirmable for this record — see the detailed breakdown below.</p>
+
+          {report.evidence.length === 0 ? (
+            <div className="mt-4 rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+              No individual studio-work signals were confirmable for this record. See the detailed breakdown below before relying on this alone.
+            </div>
+          ) : (
+            <ul className="mt-4 flex flex-col gap-3">
+              {report.evidence.map((e, i) => (
+                <li key={i} className="flex gap-3 rounded-xl border border-border bg-secondary px-4 py-4">
+                  <FileCheck className="mt-0.5 size-[18px] shrink-0 text-[#4ade80]" />
+                  <div className="min-w-0">
+                    <b className="inline-flex items-center text-[0.98rem]">
+                      {e.title}<Info text={e.tip} />
+                    </b>
+                    <p className="mt-1 text-sm">{e.finding}</p>
+                    <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{e.meaning}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
-          <ul className="rv-ev-list">
-            {report.evidence.map((e, i) => (
-              <li key={i}>
-                <span className="rv-ev-tick">✓</span>
-                <div>
-                  <b>{e.title}<Info text={e.tip} /></b>
-                  <p className="finding">{e.finding}</p>
-                  <p className="meaning">{e.meaning}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
         </section>
 
-        {/* Tier B/C — hear the stems / get the session */}
-        {(canStems || canSession) && (stems.length > 0 || session.length > 0) && (
-          <section className="rv-assets">
-            <h2>
+        {/* Tier B/C - hear the stems / get the session, behind the email gate */}
+        {showAssets && (
+          <section className="mt-8 border-t border-border pt-7">
+            <h2 className="inline-flex items-center text-lg font-bold">
               {canStems && "Hear the isolated stems"}
-              {canStems && canSession && " · "}
-              {canSession && "The session file"}
-              <Info text="Stems are the separate layers of the song (drums, vocals, etc.). Hearing them isolated is strong confirmation of real multi-track production — an AI export has none. The session file is the producer's full project." />
+              {canStems && canSession && " and session"}
+              {!canStems && canSession && "The session file"}
+              <Info text="Stems are the separate layers of the song (drums, vocals, and so on). Hearing them isolated is strong confirmation of real multi-track production, since an AI export has none. The session file is the producer's complete project." />
             </h2>
-            {!emailSaved ? (
-              <form className="rv-emailgate" onSubmit={saveEmail}>
-                <p>Enter your email to access these — it's logged for the musician and lets them see who reviewed the material. No account needed.</p>
-                <div className="row">
-                  <input type="email" required placeholder="you@distributor.com"
-                    value={email} onChange={(e) => setEmail(e.target.value)} />
-                  <button type="submit">Continue</button>
+
+            {!emailUnlocked ? (
+              <form onSubmit={saveEmail}
+                className="mt-4 rounded-xl border border-border bg-secondary p-5">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Enter your email to access these. It is logged so the musician can
+                  see who reviewed the material. No account needed.
+                </p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <Input type="email" required placeholder="you@distributor.com"
+                    value={emailInput} onChange={(e) => setEmailInput(e.target.value)}
+                    className="flex-1" />
+                  <Button type="submit" className="shrink-0">Continue</Button>
                 </div>
               </form>
             ) : (
-              <>
+              <div className="mt-4 flex flex-col gap-2.5">
                 {canStems && stems.map((a) => (
-                  <div className="rv-asset" key={a.asset_id}>
-                    <span className="name">{a.filename}</span>
-                    {streamUrl[a.asset_id] ? (
-                      <audio controls controlsList="nodownload" src={streamUrl[a.asset_id]} />
-                    ) : (
-                      <button disabled={busyAsset === a.asset_id}
-                        onClick={() => getAsset(a.asset_id, a.kind)}>
-                        {busyAsset === a.asset_id ? "…" : "▶ Listen"}
-                      </button>
-                    )}
-                  </div>
+                  <StemRow key={a.asset_id} token={token} asset={a} email={email} />
                 ))}
                 {canSession && session.map((a) => (
-                  <div className="rv-asset" key={a.asset_id}>
-                    <span className="name">{a.filename} (full session)</span>
-                    <button disabled={busyAsset === a.asset_id}
-                      onClick={() => getAsset(a.asset_id, a.kind)}>
-                      {busyAsset === a.asset_id ? "…" : "Download"}
-                    </button>
-                  </div>
+                  <SessionRow key={a.asset_id} token={token} asset={a} email={email} />
                 ))}
-              </>
+              </div>
             )}
           </section>
         )}
 
-        {/* LAYER 3 — methodology, collapsible, for the technical reviewer */}
-        <section className="rv-method">
-          <button className="rv-method-toggle" onClick={() => setMethodOpen((o) => !o)}>
-            {methodOpen ? "▾" : "▸"} How this was determined (technical detail)
+        {/* LAYER 3 - methodology, collapsible, for the technical reviewer */}
+        <section className="mt-8 border-t border-border pt-7">
+          <button type="button" onClick={() => setMethodOpen((o) => !o)}
+            className="flex w-full items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            <ChevronDown className={`size-4 transition-transform ${methodOpen ? "" : "-rotate-90"}`} />
+            How this was determined (technical detail)
           </button>
+
           {methodOpen && (
-            <div className="rv-method-body">
-              <p>
-                SessionSeal scores same-session plausibility from weighted checks;
-                each either matches, contradicts, or can't be evaluated. Absence of
-                a signal never counts against the record.
-                <Info text="We never penalize missing evidence — e.g. an all-MIDI project legitimately has no recorded takes. Only actual contradictions lower the score." />
+            <div className="mt-4 rounded-xl border border-border bg-secondary p-5">
+              <p className="inline-flex items-start text-sm leading-relaxed text-muted-foreground">
+                <span>
+                  SessionSeal scores same-session plausibility from a set of weighted
+                  checks. Each one either matches, contradicts, or cannot be evaluated.
+                  The absence of a signal never counts against the record.
+                </span>
+                <Info text="We never penalise missing evidence. An all-MIDI project legitimately has no recorded takes, for example. Only actual contradictions lower the score." />
               </p>
-              <div className="rv-method-stat">
-                Overall band: <b>{report.methodology.band}</b>
-                {report.methodology.score != null && <> · score {report.methodology.score}/100</>}
+
+              <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                <span className="text-muted-foreground">Overall band:</span>
+                <b>{report.methodology.band}</b>
+                {report.methodology.score != null && (
+                  <span className="text-muted-foreground">· score {report.methodology.score}/100</span>
+                )}
                 {report.methodology.coherence?.confidence != null && (
-                  <> · stems→master {(report.methodology.coherence.confidence * 100).toFixed(1)}%</>
+                  <span className="text-muted-foreground">
+                    · stems rebuild the master {(report.methodology.coherence.confidence * 100).toFixed(1)}%
+                  </span>
                 )}
               </div>
-              <table className="rv-checks">
-                <thead><tr><th>Check</th><th>Result</th><th>Detail</th></tr></thead>
-                <tbody>
-                  {report.methodology.checks.map((c, i) => (
-                    <tr key={i} className={c.result}>
-                      <td>{c.check}</td>
-                      <td>{c.result.replace("_", " ")}</td>
-                      <td>{c.note}</td>
+
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                      <th className="py-2 pr-3 font-semibold">Check</th>
+                      <th className="py-2 pr-3 font-semibold">Result</th>
+                      <th className="py-2 font-semibold">Detail</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="rv-disclaimer">
-                This report evidences real studio work; it does not by itself
-                prove authorship. It is intended to help a reviewer assess an
-                AI-generation flag.
+                  </thead>
+                  <tbody>
+                    {report.methodology.checks.map((c, i) => {
+                      const rm = RESULT_META[c.result] || RESULT_META.not_evaluable;
+                      return (
+                        <tr key={i} className="border-b border-border/60 align-top">
+                          <td className="py-2.5 pr-3">{c.check}</td>
+                          <td className="py-2.5 pr-3">
+                            <span className={`inline-flex items-center gap-1.5 whitespace-nowrap ${rm.cls}`}>
+                              <rm.Icon className="size-3.5" /> {rm.label}
+                            </span>
+                          </td>
+                          <td className="py-2.5 text-muted-foreground">{c.note}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <p className="mt-4 text-xs italic leading-relaxed text-muted-foreground">
+                This report evidences real studio work. It does not by itself prove
+                authorship. It is intended to help a reviewer assess an AI-generation flag.
               </p>
             </div>
           )}
         </section>
 
-        <footer className="rv-foot">
-          Verified with SessionSeal · this page reflects the record's current
-          shared state and is logged for the musician.
+        <footer className="mt-10 text-center text-xs text-muted-foreground">
+          Verified with SessionSeal. This page reflects the record's current shared
+          state and is logged for the musician.
         </footer>
       </main>
     </div>
