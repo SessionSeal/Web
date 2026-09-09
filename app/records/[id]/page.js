@@ -2,143 +2,295 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { AuthButton, Info } from "../../components";
+import { AuthButton, Info, IconButton, Icons, Modal, Switch } from "../../components";
 
 const API = "/backend";
 
-const TIER_INFO = {
+const TIER_META = {
   STEM_PREVIEW: {
     label: "Isolated stems",
-    tip: "Lets the reviewer LISTEN to your individual stems (no download) to confirm real multi-track production. Hearing separate layers is strong proof it isn't an AI export.",
+    sub: "Reviewer can listen to each stem in the browser (no download).",
+    tip: "Hearing the separate layers of the song (drums, vocals, and so on) is strong confirmation of real multi-track production. An AI export has no stems.",
+    icon: Icons.wave,
   },
   SESSION: {
     label: "Full session file",
-    tip: "Lets the reviewer DOWNLOAD your complete .logicx project — your most sensitive file. Only enable this if a reviewer specifically needs it; most disputes are won with the report alone.",
+    sub: "Reviewer can download your complete project file.",
+    tip: "Your most sensitive file. Only enable this if a reviewer specifically asks. Most disputes are won with the report alone.",
+    icon: Icons.folder,
   },
 };
 
+function relTime(iso) {
+  const d = new Date(iso), now = Date.now();
+  const s = Math.round((now - d) / 1000);
+  if (s < 60) return "just now";
+  const m = Math.round(s / 60); if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60); if (h < 24) return `${h} hr ago`;
+  const days = Math.round(h / 24); if (days < 30) return `${days} day${days > 1 ? "s" : ""} ago`;
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+// The shared create/edit modal — same shape for both flows.
+function ShareModal({ recordId, existing, onClose, onSaved }) {
+  const editing = !!existing;
+  const [label, setLabel] = useState(existing?.label || "");
+  const [tiers, setTiers] = useState(
+    new Set(existing?.tiers || ["REPORT"]));
+  const [expiry, setExpiry] = useState(existing?.expiryDays ?? 30);
+  const [busy, setBusy] = useState(false);
+
+  function toggle(t) {
+    setTiers((prev) => {
+      const n = new Set(prev);
+      n.has(t) ? n.delete(t) : n.add(t);
+      n.add("REPORT");
+      return n;
+    });
+  }
+
+  async function save() {
+    setBusy(true);
+    try {
+      const tierArr = ["REPORT", ...[...tiers].filter((t) => t !== "REPORT")];
+      if (editing) {
+        await fetch(`${API}/shares/${existing.id}`, {
+          method: "PATCH", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tiers: tierArr, label: label.trim() }),
+        });
+        onSaved(null);
+      } else {
+        const res = await fetch(`${API}/records/${recordId}/shares`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tiers: tierArr, label: label.trim(),
+            expires_at: expiry ? new Date(Date.now() + expiry * 864e5).toISOString() : null,
+          }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.detail || "failed");
+        onSaved(`${window.location.origin}/s/${body.token}`);
+      }
+    } catch (e) { alert(e.message); setBusy(false); }
+  }
+
+  return (
+    <Modal
+      title={editing ? "Manage access" : "Create a dispute link"}
+      onClose={onClose}
+      footer={
+        <>
+          <button className="sh-ghost" onClick={onClose}>Cancel</button>
+          <button className="sh-primary" disabled={busy} onClick={save}>
+            {busy ? "Saving…" : editing ? "Save changes" : "Create link"}
+          </button>
+        </>
+      }>
+      <label className="sh-field">
+        <span>Label<Info text="A private note to help you remember which dispute this link is for. The reviewer never sees it." /></span>
+        <input type="text" value={label} placeholder="e.g. DistroKid ticket #4821"
+          onChange={(e) => setLabel(e.target.value)} />
+      </label>
+
+      <div className="sh-access">
+        <div className="sh-access-head">What the reviewer can access</div>
+        <div className="sh-accessrow locked">
+          <span className="ic"><Icons.doc /></span>
+          <div className="txt">
+            <b>Verification report</b>
+            <span>Always on. The plain-language evidence that wins most disputes.</span>
+          </div>
+          <span className="sh-always">Included</span>
+        </div>
+        {["STEM_PREVIEW", "SESSION"].map((t) => {
+          const m = TIER_META[t];
+          return (
+            <div className="sh-accessrow" key={t}>
+              <span className="ic"><m.icon /></span>
+              <div className="txt">
+                <b>{m.label}<Info text={m.tip} /></b>
+                <span>{m.sub}</span>
+              </div>
+              <Switch checked={tiers.has(t)} onChange={() => toggle(t)} />
+            </div>
+          );
+        })}
+      </div>
+
+      {!editing && (
+        <label className="sh-field">
+          <span>Link expires after<Info text="After this, the link stops working automatically. You can also revoke it anytime." /></span>
+          <select value={expiry} onChange={(e) => setExpiry(Number(e.target.value))}>
+            <option value={7}>7 days</option>
+            <option value={30}>30 days</option>
+            <option value={90}>90 days</option>
+            <option value={0}>Never</option>
+          </select>
+        </label>
+      )}
+    </Modal>
+  );
+}
+
+function CreatedLink({ url, onClose }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Modal title="Your link is ready" onClose={onClose}
+      footer={<button className="sh-primary" onClick={onClose}>Done</button>}>
+      <p className="sh-modal-note">
+        Paste this into your reply to the distributor. They will not need a
+        SessionSeal account to open it.
+      </p>
+      <div className="sh-linkbox">
+        <span className="ic"><Icons.link /></span>
+        <code>{url}</code>
+        <button className="sh-copy" onClick={() => {
+          navigator.clipboard.writeText(url).then(() => {
+            setCopied(true); setTimeout(() => setCopied(false), 1600);
+          });
+        }}>{copied ? "Copied" : <><Icons.copy /> Copy</>}</button>
+      </div>
+    </Modal>
+  );
+}
+
 function SharePanel({ recordId }) {
   const [shares, setShares] = useState(null);
-  const [stem, setStem] = useState(false);
-  const [session, setSession] = useState(false);
-  const [label, setLabel] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [newLink, setNewLink] = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [creating, setCreating] = useState(false);   // create modal open
+  const [editing, setEditing] = useState(null);      // share being edited
+  const [createdLink, setCreatedLink] = useState(null); // just-created url
+  const [detail, setDetail] = useState(null);        // share whose activity is open
 
   function load() {
-    fetch(`${API}/records/${recordId}/shares`)
+    return fetch(`${API}/records/${recordId}/shares`)
       .then((r) => (r.ok ? r.json() : { shares: [] }))
       .then((d) => setShares(d.shares || []))
       .catch(() => setShares([]));
   }
-  useEffect(load, [recordId]);
-
-  async function create() {
-    setCreating(true);
-    try {
-      const tiers = ["REPORT", ...(stem ? ["STEM_PREVIEW"] : []), ...(session ? ["SESSION"] : [])];
-      const res = await fetch(`${API}/records/${recordId}/shares`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tiers, label: label.trim() }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.detail || "failed");
-      setNewLink(`${window.location.origin}/s/${body.token}`);
-      setLabel(""); setStem(false); setSession(false);
-      load();
-    } catch (e) { alert(e.message); } finally { setCreating(false); }
-  }
+  useEffect(() => { load(); }, [recordId]);
 
   async function revoke(id) {
-    if (!confirm("Revoke this link? The reviewer will immediately lose access.")) return;
     await fetch(`${API}/shares/${id}/revoke`, { method: "POST" });
     load();
   }
 
-  async function toggleTier(share, tier) {
-    const has = share.tiers.includes(tier);
-    const tiers = has ? share.tiers.filter((t) => t !== tier)
-                      : [...share.tiers, tier];
-    await fetch(`${API}/shares/${share.id}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tiers }),
-    });
-    load();
-  }
+  const active = (shares || []).filter((s) => s.status !== "REVOKED");
 
   return (
-    <div className="sh-panel">
-      <h3>Share for a dispute
-        <Info text="If a distributor flags this track as AI, create a link to send them. They see a plain-language report proving real studio work — no SessionSeal account needed on their end. You control exactly what they can access, and can change or revoke it anytime." />
-      </h3>
-      <p className="hint">
-        Creates one link you paste into the distributor's reply. The report is
-        always included; you choose whether they can also hear stems or download
-        the session.
-      </p>
-
-      <div className="sh-tier">
-        <input type="checkbox" checked readOnly />
-        <span className="lbl"><b>Verification report</b>
-          <span>Always included — the plain-language evidence. Wins most disputes on its own.</span>
-        </span>
-      </div>
-      {["STEM_PREVIEW", "SESSION"].map((t) => (
-        <div className="sh-tier" key={t}>
-          <input type="checkbox"
-            checked={t === "STEM_PREVIEW" ? stem : session}
-            onChange={(e) => (t === "STEM_PREVIEW" ? setStem : setSession)(e.target.checked)} />
-          <span className="lbl"><b>{TIER_INFO[t].label}<Info text={TIER_INFO[t].tip} /></b></span>
+    <section className="sh-panel">
+      <div className="sh-panel-head">
+        <div>
+          <h2>Dispute links<Info text="If a distributor flags this track as AI, send them a link. They see a plain-language report proving real studio work. You control exactly what each link can access and can change or revoke it anytime." /></h2>
+          <p>Share this record's evidence with a distributor, without handing over your files.</p>
         </div>
-      ))}
-
-      <div className="sh-row">
-        <input type="text" placeholder="Label (e.g. DistroKid ticket #4821)"
-          value={label} onChange={(e) => setLabel(e.target.value)} />
-        <button className="sh-btn" disabled={creating} onClick={create}>
-          {creating ? "Creating…" : "Create link"}
+        <button className="sh-primary" onClick={() => setCreating(true)}>
+          <Icons.link /> New link
         </button>
       </div>
 
-      {newLink && (
-        <div className="sh-link">
-          <code>{newLink}</code>
-          <button className="sh-btn" onClick={() => {
-            navigator.clipboard.writeText(newLink).then(() => {
-              setCopied(true); setTimeout(() => setCopied(false), 1500);
-            });
-          }}>{copied ? "Copied ✓" : "Copy"}</button>
+      {shares === null && <p className="sh-empty">Loading…</p>}
+      {shares && active.length === 0 && (
+        <div className="sh-empty">
+          No links yet. Create one to share this record with a reviewer.
         </div>
       )}
 
-      {shares && shares.length > 0 && (
-        <div className="sh-existing">
-          {shares.map((s) => (
-            <div className={`sh-share ${s.status === "REVOKED" ? "sh-revoked" : ""}`} key={s.id}>
-              <b>{s.label || "Untitled share"}</b> — {s.status.toLowerCase()}
-              {s.tiers.filter((t) => t !== "REPORT").length > 0 &&
-                <> · {s.tiers.filter((t) => t !== "REPORT").map((t) => TIER_INFO[t]?.label).join(", ")}</>}
-              <div className="meta">
-                {(s.accesses || []).length} view{(s.accesses || []).length === 1 ? "" : "s"}
-                {(s.accesses || [])[0] && <> · last: {(s.accesses[0].reviewer_email || "anonymous")} on {new Date(s.accesses[0].created_at).toLocaleDateString()}</>}
-              </div>
-              {s.status !== "REVOKED" && (
-                <div className="acts">
-                  <button onClick={() => toggleTier(s, "STEM_PREVIEW")}>
-                    {s.tiers.includes("STEM_PREVIEW") ? "Disable stems" : "Enable stems"}
-                  </button>
-                  <button onClick={() => toggleTier(s, "SESSION")}>
-                    {s.tiers.includes("SESSION") ? "Disable session" : "Enable session"}
-                  </button>
-                  <button onClick={() => revoke(s.id)}>Revoke</button>
+      {shares && active.length > 0 && (
+        <div className="sh-list">
+          {active.map((s) => {
+            const extra = s.tiers.filter((t) => t !== "REPORT");
+            const views = (s.accesses || []).length;
+            const reviewers = new Set((s.accesses || [])
+              .map((a) => a.reviewer_email).filter(Boolean)).size;
+            const last = (s.accesses || [])[0];
+            return (
+              <div className="sh-card" key={s.id} onClick={() => setDetail(s)}>
+                <div className="sh-card-main">
+                  <div className="sh-card-title">
+                    <b>{s.label || "Untitled link"}</b>
+                    <span className="sh-badges">
+                      <span className="sh-badge report">Report</span>
+                      {extra.map((t) => (
+                        <span className="sh-badge" key={t}>{TIER_META[t].label}</span>
+                      ))}
+                    </span>
+                  </div>
+                  <div className="sh-card-activity">
+                    {views === 0
+                      ? "Not opened yet"
+                      : `Opened ${views} time${views > 1 ? "s" : ""}` +
+                        (reviewers ? ` by ${reviewers} reviewer${reviewers > 1 ? "s" : ""}` : "") +
+                        (last ? ` · last ${relTime(last.created_at)}` : "")}
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+                <span className="sh-card-chev">›</span>
+              </div>
+            );
+          })}
         </div>
       )}
-    </div>
+
+      {creating && (
+        <ShareModal recordId={recordId} onClose={() => setCreating(false)}
+          onSaved={(link) => { load(); setCreating(false); if (link) setCreatedLink(link); }} />
+      )}
+      {createdLink && (
+        <CreatedLink url={createdLink} onClose={() => setCreatedLink(null)} />
+      )}
+      {editing && (
+        <ShareModal recordId={recordId}
+          existing={{ id: editing.id, label: editing.label, tiers: editing.tiers }}
+          onClose={() => setEditing(null)}
+          onSaved={() => { load(); setEditing(null); }} />
+      )}
+      {detail && (
+        <ShareDetail share={detail} onClose={() => setDetail(null)}
+          onEdit={() => { const s = detail; setDetail(null); setEditing(s); }}
+          onRevoke={async () => { await revoke(detail.id); setDetail(null); }} />
+      )}
+    </section>
+  );
+}
+
+// Detail drawer: activity timeline + manage / revoke, opened by clicking a card.
+function ShareDetail({ share, onClose, onEdit, onRevoke }) {
+  const extra = share.tiers.filter((t) => t !== "REPORT");
+  const accesses = share.accesses || [];
+  return (
+    <Modal title={share.label || "Untitled link"} onClose={onClose}
+      footer={
+        <>
+          <button className="sh-danger" onClick={() => {
+            if (confirm("Revoke this link? The reviewer loses access immediately.")) onRevoke();
+          }}><Icons.trash /> Revoke</button>
+          <button className="sh-primary" onClick={onEdit}>Manage access</button>
+        </>
+      }>
+      <div className="sh-detail-tiers">
+        <span className="sh-badge report">Report</span>
+        {extra.map((t) => <span className="sh-badge" key={t}>{TIER_META[t].label}</span>)}
+      </div>
+      <div className="sh-detail-sub">Activity</div>
+      {accesses.length === 0 ? (
+        <p className="sh-empty">This link hasn't been opened yet.</p>
+      ) : (
+        <ul className="sh-timeline">
+          {accesses.map((a, i) => (
+            <li key={i}>
+              <span className="dot" />
+              <div>
+                <b>{a.reviewer_email || "A reviewer"}</b>{" "}
+                {a.action === "VIEW_REPORT" ? "viewed the report"
+                  : a.action === "STREAM_STEM" ? "listened to a stem"
+                  : a.action === "DOWNLOAD_SESSION" ? "downloaded the session"
+                  : "accessed the record"}
+                <span className="t">{relTime(a.created_at)}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Modal>
   );
 }
 
@@ -174,7 +326,7 @@ export default function RecordPage() {
     fetch(`${API}/records/${id}`)
       .then((r) => {
         if (!r.ok) throw new Error(r.status === 404
-          ? "This record doesn't exist — or it isn't yours."
+          ? "This record doesn't exist, or it isn't yours."
           : `couldn't load the record (${r.status})`);
         return r.json();
       })
@@ -216,15 +368,29 @@ export default function RecordPage() {
                 <h1>{rec.title || "Untitled"}</h1>
                 <p className="artist">{rec.artist_name}</p>
               </div>
-              <span className={`db-chip ${sealed ? "ok" : rec.status === "FAILED" ? "bad" : "busy"}`}>
-                {sealed ? "Sealed" : rec.status === "FAILED" ? "Failed" : "Sealing…"}
-              </span>
+              {sealed && (
+                <div className="rec-actions">
+                  <IconButton label="Download signed master"
+                    href={`${API}/records/${rec.id}/release`} download>
+                    <Icons.download />
+                  </IconButton>
+                  {rec.manifest_public_url && (
+                    <IconButton label="View signed manifest"
+                      href={rec.manifest_public_url}>
+                      <Icons.manifest />
+                    </IconButton>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="db-rec-when">
+              <span className={`rec-status ${sealed ? "ok" : rec.status === "FAILED" ? "bad" : "busy"}`}>
+                {sealed ? "Sealed" : rec.status === "FAILED" ? "Failed" : "Sealing"}
+              </span>
               {sealed
-                ? <>Sealed <b>{fmtDateTime(rec.sealed_at || rec.created_at)}</b> · </>
-                : <>Started <b>{fmtDateTime(rec.created_at)}</b> · </>}
+                ? <> {fmtDateTime(rec.sealed_at || rec.created_at)} · </>
+                : <> {fmtDateTime(rec.created_at)} · </>}
               record <span className="wz-mono">{rec.id}</span>
             </div>
 
@@ -239,7 +405,7 @@ export default function RecordPage() {
                 ) : rec.status === "DRAFT" ? (
                   <>
                     <p>
-                      This record was started but never finished sealing — the
+                      This record was started but never finished sealing. The
                       upload didn't complete.
                     </p>
                     <a className="wz-btn" href="/seal">Start a new seal →</a>
@@ -261,7 +427,7 @@ export default function RecordPage() {
                     <span>
                       Stems rebuild the master
                       {rec.coherence_confidence != null &&
-                        ` — ${(rec.coherence_confidence * 100).toFixed(1)}% match`}
+                        ` · ${(rec.coherence_confidence * 100).toFixed(1)}% match`}
                     </span>
                   </li>
                 )}
@@ -290,26 +456,12 @@ export default function RecordPage() {
                   <li>
                     <span className="ic ok">✓</span>
                     <span>
-                      Cryptographically signed — record and results sealed
+                      Cryptographically signed, record and results sealed
                       together
                     </span>
                   </li>
                 )}
               </ul>
-            )}
-
-            {sealed && (
-              <div className="db-actions">
-                <a className="wz-btn" href={`${API}/records/${rec.id}/release`}>
-                  Download signed master
-                </a>
-                {rec.manifest_public_url && (
-                  <a className="wz-btn ghost" href={rec.manifest_public_url}
-                    target="_blank" rel="noopener noreferrer">
-                    View manifest
-                  </a>
-                )}
-              </div>
             )}
 
             {sealed && <SharePanel recordId={rec.id} />}

@@ -9,36 +9,84 @@ export function fmtBytes(n) {
   return `${(n / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-// A small "?" that reveals a plain-language explanation on hover/tap. Used
-// everywhere in the share flow so we never assume the reader knows the terms.
-export function Info({ text }) {
+// A subtle (i) that reveals a plain-language explanation on hover/tap, with a
+// gentle fade+lift. Used everywhere so we never assume the reader knows a term.
+export function Info({ text, align = "center" }) {
   const [open, setOpen] = useState(false);
   return (
-    <span className="ss-info" style={{ position: "relative", display: "inline-flex" }}>
-      <button type="button" aria-label="What does this mean?"
-        onClick={() => setOpen((o) => !o)}
-        onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}
-        style={{
-          width: 16, height: 16, borderRadius: "50%", cursor: "help",
-          border: "1px solid var(--border-strong)", background: "transparent",
-          color: "var(--muted)", fontSize: 10, fontWeight: 700, lineHeight: 1,
-          display: "inline-flex", alignItems: "center", justifyContent: "center",
-          padding: 0, marginLeft: 6, verticalAlign: "middle",
-        }}>?</button>
-      {open && (
-        <span role="tooltip" style={{
-          position: "absolute", bottom: "calc(100% + 8px)", left: "50%",
-          transform: "translateX(-50%)", width: 260, zIndex: 90,
-          background: "var(--panel-2)", color: "var(--text)",
-          border: "1px solid var(--border-strong)", borderRadius: 10,
-          padding: "10px 12px", fontSize: "0.8rem", fontWeight: 400,
-          lineHeight: 1.5, textAlign: "left",
-          boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
-        }}>{text}</span>
-      )}
+    <span className="ss-info" onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}>
+      <button type="button" className="ss-info-dot" aria-label="More info"
+        onClick={() => setOpen((o) => !o)}>i</button>
+      <span role="tooltip" className={`ss-info-tip ${align} ${open ? "in" : ""}`}>
+        {text}
+      </span>
     </span>
   );
 }
+
+// Small hover-labelled icon button for title bars.
+export function IconButton({ label, onClick, href, download, children }) {
+  const [hover, setHover] = useState(false);
+  const common = {
+    className: "ss-iconbtn",
+    onMouseEnter: () => setHover(true),
+    onMouseLeave: () => setHover(false),
+    "aria-label": label,
+  };
+  const inner = (
+    <>
+      {children}
+      <span className={`ss-iconbtn-tip ${hover ? "in" : ""}`}>{label}</span>
+    </>
+  );
+  return href
+    ? <a href={href} {...(download ? {} : { target: "_blank", rel: "noopener noreferrer" })} {...common}>{inner}</a>
+    : <button type="button" onClick={onClick} {...common}>{inner}</button>;
+}
+
+// A pill toggle (switch), replaces checkboxes.
+export function Switch({ checked, onChange, disabled }) {
+  return (
+    <button type="button" role="switch" aria-checked={checked}
+      disabled={disabled}
+      className={`ss-switch ${checked ? "on" : ""} ${disabled ? "locked" : ""}`}
+      onClick={() => !disabled && onChange(!checked)}>
+      <span className="knob" />
+    </button>
+  );
+}
+
+// A centered modal with backdrop, escape-to-close, subtle entrance.
+export function Modal({ title, onClose, children, footer }) {
+  return (
+    <div className="ss-modal-backdrop" onClick={onClose}>
+      <div className="ss-modal" onClick={(e) => e.stopPropagation()}
+        role="dialog" aria-modal="true">
+        <div className="ss-modal-head">
+          <h3>{title}</h3>
+          <button className="ss-modal-x" aria-label="Close" onClick={onClose}>✕</button>
+        </div>
+        <div className="ss-modal-body">{children}</div>
+        {footer && <div className="ss-modal-foot">{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+// Icon set (inline SVG, currentColor, 18px default).
+export const Icons = {
+  download: (p) => (<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>),
+  manifest: (p) => (<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>),
+  share: (p) => (<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>),
+  link: (p) => (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/></svg>),
+  copy: (p) => (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg>),
+  trash: (p) => (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>),
+  eye: (p) => (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>),
+  wave: (p) => (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 12v0M8 8v8M12 5v14M16 9v6M20 12v0"/></svg>),
+  folder: (p) => (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>),
+  doc: (p) => (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/></svg>),
+};
 
 export function Mark() {
   // The sealed record: solid disc, knocked-out core, groove opening from
