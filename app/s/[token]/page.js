@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import {
-  ShieldCheck, Lock, FileCheck, Play, Pause, Download, ChevronDown,
+  Lock, Play, Download, ChevronDown,
   AudioLines, FolderOpen, ExternalLink, CircleCheck, TriangleAlert, MinusCircle,
 } from "lucide-react";
 import { Info, Mark, Wordmark } from "../../components";
@@ -112,7 +112,8 @@ function StemRow({ token, asset, email }) {
       <AudioLines className="size-4 shrink-0 text-muted-foreground" />
       <span className="min-w-0 flex-1 truncate text-sm">{asset.filename}</span>
       {url ? (
-        <audio controls controlsList="nodownload" src={url} className="h-9 max-w-[220px]" />
+        <audio controls autoPlay controlsList="nodownload" src={url}
+          className="h-9 max-w-[220px]" />
       ) : (
         <Button size="sm" variant="outline" disabled={busy} onClick={load} className="shrink-0 gap-1.5">
           <Play className="size-3.5" /> {busy ? "Loading" : "Listen"}
@@ -252,19 +253,16 @@ export default function ReviewerPage() {
           <p className="mt-3 leading-relaxed text-muted-foreground">{v.summary}</p>
           <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-1.5 border-t border-border pt-4 text-sm text-muted-foreground">
             <span><b className="text-foreground">{report.title}</b> by {report.artist}</span>
-            <span className="inline-flex items-center">
-              Sealed {fmtDate(report.sealed_at)}
-              <Info text="The date SessionSeal cryptographically locked this record. Because it was sealed before any dispute arose, the evidence cannot have been fabricated after the fact." />
-            </span>
+            <span>Sealed {fmtDate(report.sealed_at)}</span>
           </div>
         </section>
 
-        {/* Integrity strip */}
-        <section className="mt-4 flex items-start gap-3 rounded-xl border border-border bg-secondary px-4 py-3.5 text-sm text-muted-foreground">
-          <Lock className="mt-0.5 size-4 shrink-0 text-[#4ade80]" />
+        {/* Integrity strip. One (i) only, on C2PA, the single term a reviewer
+            genuinely won't know. */}
+        <section className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-secondary px-4 py-3.5 text-sm text-muted-foreground">
+          <Lock className="size-4 shrink-0 text-[#4ade80]" />
           <p className="leading-relaxed">
             Cryptographically sealed and unaltered since {fmtDate(report.sealed_at)}.
-            <Info text={report.integrity.note} />
             {report.integrity.manifest_url && (
               <>
                 {" "}
@@ -272,51 +270,26 @@ export default function ReviewerPage() {
                   className="inline-flex items-center gap-1 text-brand hover:underline">
                   View the signed record <ExternalLink className="size-3" />
                 </a>
-                <Info text="The public, tamper-evident record (a C2PA Content Credential) uses the same standard Adobe, camera makers, and streaming platforms use to verify where content came from." />
+                <Info text="The signed record is a C2PA Content Credential: a public, tamper-evident file using the same standard Adobe, camera makers, and streaming platforms use to verify where content came from." />
               </>
             )}
           </p>
         </section>
 
-        {/* LAYER 2 - the evidence, explained */}
-        <section className="mt-8">
-          <h2 className="text-lg font-bold">Why this looks like real studio work</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Each point below is something an AI-generated track cannot produce. The
-            <Info text="Hover the (i) beside any point to see, in plain language, exactly what was checked and why it matters." /> beside a point explains what it means.
-          </p>
-
-          {report.evidence.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">
-              No individual studio-work signals were confirmable for this record. See the detailed breakdown below before relying on this alone.
-            </div>
-          ) : (
-            <ul className="mt-4 flex flex-col gap-3">
-              {report.evidence.map((e, i) => (
-                <li key={i} className="flex gap-3 rounded-xl border border-border bg-secondary px-4 py-4">
-                  <FileCheck className="mt-0.5 size-[18px] shrink-0 text-[#4ade80]" />
-                  <div className="min-w-0">
-                    <b className="inline-flex items-center text-[0.98rem]">
-                      {e.title}<Info text={e.tip} />
-                    </b>
-                    <p className="mt-1 text-sm">{e.finding}</p>
-                    <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{e.meaning}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {/* Tier B/C - hear the stems / get the session, behind the email gate */}
+        {/* Hear the material FIRST: the strongest, most direct evidence a
+            reviewer can check with their own ears. Behind the email gate. */}
         {showAssets && (
-          <section className="mt-8 border-t border-border pt-7">
+          <section className="mt-8">
             <h2 className="inline-flex items-center text-lg font-bold">
               {canStems && "Hear the isolated stems"}
               {canStems && canSession && " and session"}
               {!canStems && canSession && "The session file"}
               <Info text="Stems are the separate layers of the song (drums, vocals, and so on). Hearing them isolated is strong confirmation of real multi-track production, since an AI export has none. The session file is the producer's complete project." />
             </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              The most direct check you can make: real multi-track production sounds
+              like separable layers. An AI export has none.
+            </p>
 
             {!emailUnlocked ? (
               <form onSubmit={saveEmail}
@@ -344,6 +317,32 @@ export default function ReviewerPage() {
             )}
           </section>
         )}
+
+        {/* The evidence, as a scannable checklist. No subtitle, no per-row (i):
+            each row leads with the plain claim and shows the specifics beneath. */}
+        <section className="mt-10 border-t border-border pt-8">
+          <h2 className="text-lg font-bold">Why this looks like real studio work</h2>
+
+          {report.evidence.length === 0 ? (
+            <div className="mt-4 rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+              No individual studio-work signals were confirmable for this record. See the detailed breakdown below before relying on this alone.
+            </div>
+          ) : (
+            <ul className="mt-5 flex flex-col divide-y divide-border">
+              {report.evidence.map((e, i) => (
+                <li key={i} className="flex gap-3.5 py-4 first:pt-0">
+                  <CircleCheck className="mt-0.5 size-[18px] shrink-0 text-[#4ade80]" />
+                  <div className="min-w-0">
+                    <b className="text-[0.98rem] font-semibold">{e.title}</b>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      {e.meaning}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         {/* LAYER 3 - methodology, collapsible, for the technical reviewer */}
         <section className="mt-8 border-t border-border pt-7">
