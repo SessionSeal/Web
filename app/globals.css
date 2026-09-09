@@ -1,38 +1,45 @@
 @import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
-/* ShadCN semantic tokens, mapped to SessionSeal's brand values so ShadCN
-   components render in our dark/electric-blue look automatically. */
+/* ShadCN semantic tokens mapped to SessionSeal's design system. NOTE on
+   ShadCN conventions: `accent` is a SUBTLE NEUTRAL hover/skeleton surface
+   (NOT the brand blue); `primary` is the main action color; `foreground` is
+   body text. Getting these right is what makes ShadCN look like "ours"
+   rather than a generic template. The brand blue is exposed as `brand`. */
 @theme inline {
-  --color-background: #08090c;
-  --color-foreground: #f2f3f5;
-  --color-card: #10131a;
+  --color-background: #08090c;      /* --bg */
+  --color-foreground: #f2f3f5;      /* --text */
+  --color-card: #10131a;            /* --panel */
   --color-card-foreground: #f2f3f5;
-  --color-popover: #171b23;
+  --color-popover: #171b23;         /* --panel-2 */
   --color-popover-foreground: #f2f3f5;
-  --color-primary: #f2f3f5;
+  --color-primary: #f2f3f5;         /* white primary button (matches app) */
   --color-primary-foreground: #08090c;
-  --color-secondary: #171b23;
+  --color-secondary: #171b23;       /* --panel-2 (subtle surfaces) */
   --color-secondary-foreground: #f2f3f5;
-  --color-muted: #171b23;
-  --color-muted-foreground: #8a919e;
-  --color-accent: #4d7eff;
-  --color-accent-foreground: #ffffff;
-  --color-destructive: #f87171;
+  --color-muted: #171b23;           /* neutral surface (skeletons, etc.) */
+  --color-muted-foreground: #8a919e;/* --muted text */
+  --color-accent: #1b2030;          /* subtle neutral hover surface, NOT blue */
+  --color-accent-foreground: #f2f3f5;
+  --color-brand: #4d7eff;           /* the actual electric blue, used explicitly */
+  --color-destructive: #f87171;     /* --warn */
   --color-destructive-foreground: #ffffff;
-  --color-border: rgba(255, 255, 255, 0.16);
-  --color-input: rgba(255, 255, 255, 0.16);
+  --color-border: rgba(255, 255, 255, 0.09);   /* --border (hairline) */
+  --color-input: rgba(255, 255, 255, 0.16);    /* --border-strong */
   --color-ring: #4d7eff;
+  --radius: 14px;
   --radius-sm: 8px;
   --radius-md: 10px;
   --radius-lg: 14px;
   --font-sans: "Hanken Grotesk", -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
+/* box-sizing is safe to keep universal. margin/padding reset is NOT applied
+   with `*` because an unlayered `* { margin:0 }` overrides Tailwind's layered
+   margin/padding utilities (mb-5, py-3, …) — it broke all Tailwind spacing.
+   Tailwind's preflight already zeroes default element margins. */
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 :root {

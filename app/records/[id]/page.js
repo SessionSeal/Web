@@ -114,7 +114,7 @@ function ShareModal({ recordId, existing, onClose, onSaved }) {
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-[460px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="font-serif text-2xl font-normal">
             {editing ? "Manage access" : "Create a dispute link"}
@@ -184,7 +184,7 @@ function ShareModal({ recordId, existing, onClose, onSaved }) {
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="mt-2 gap-2.5">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button disabled={busy} onClick={save}>
             {busy ? "Saving…" : editing ? "Save changes" : "Create link"}
@@ -217,7 +217,7 @@ function CopyLinkRow({ url }) {
 function CreatedLink({ url, onClose }) {
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-[460px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="font-serif text-2xl font-normal">Your link is ready</DialogTitle>
           <DialogDescription>
@@ -226,7 +226,7 @@ function CreatedLink({ url, onClose }) {
           </DialogDescription>
         </DialogHeader>
         <div className="py-1"><CopyLinkRow url={url} /></div>
-        <DialogFooter>
+        <DialogFooter className="mt-2 gap-2.5">
           <Button onClick={onClose}>Done</Button>
         </DialogFooter>
       </DialogContent>
@@ -365,7 +365,7 @@ function ShareDetail({ share, onClose, onEdit, onRevoke }) {
     ? `${window.location.origin}/s/${share.token}` : "";
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-[460px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="font-serif text-2xl font-normal">
             {share.label || "Untitled link"}
@@ -499,10 +499,13 @@ export default function RecordPage() {
 
         {error && <div className="db-error">{error}</div>}
         {!rec && !error && (
-          <div className="flex flex-col gap-4">
-            <Skeleton className="h-10 w-2/3" />
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="mt-4 h-48 w-full rounded-2xl" />
+          <div aria-hidden="true">
+            {/* mirrors the loaded layout's box sizes to avoid any reflow */}
+            <Skeleton className="h-[40px] w-56 rounded-lg" />
+            <Skeleton className="mt-3 h-4 w-32 rounded" />
+            <Skeleton className="mt-4 h-5 w-80 rounded" />
+            <Skeleton className="mt-6 h-[220px] w-full rounded-2xl" />
+            <Skeleton className="mt-7 h-24 w-full rounded-xl" />
           </div>
         )}
 
