@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import {
-  Download, FileText, Share2, Link2, Copy, Check, Trash2, ChevronRight,
+  Download, FileText, Link2, Copy, Check, Trash2, ChevronRight,
   AudioLines, FolderOpen, FileCheck,
 } from "lucide-react";
 import { AuthButton, Info } from "../../components";
@@ -206,7 +206,7 @@ function CopyLinkRow({ url }) {
   return (
     <div className="flex items-center gap-2 rounded-[10px] border border-border bg-secondary px-3 py-2">
       <Link2 className="size-4 shrink-0 text-muted-foreground" />
-      <code className="flex-1 truncate text-xs">{url}</code>
+      <code className="min-w-0 flex-1 truncate text-xs">{url}</code>
       <Button size="sm" onClick={copy} className="shrink-0">
         {copied ? <><Check className="size-3.5" /> Copied</> : <><Copy className="size-3.5" /> Copy</>}
       </Button>
@@ -285,9 +285,11 @@ function SharePanel({ recordId }) {
         </div>
       )}
       {shares && active.length === 0 && (
-        <div className="rounded-xl border border-dashed border-border p-5 text-center text-sm text-muted-foreground">
+        <button type="button" onClick={() => setCreating(true)}
+          className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground transition-colors hover:border-input hover:bg-secondary/50 hover:text-foreground">
+          <Link2 className="size-5 text-muted-foreground" />
           No links yet. Create one to share this record with a reviewer.
-        </div>
+        </button>
       )}
 
       {shares && active.length > 0 && (
@@ -500,12 +502,22 @@ export default function RecordPage() {
         {error && <div className="db-error">{error}</div>}
         {!rec && !error && (
           <div aria-hidden="true">
-            {/* mirrors the loaded layout's box sizes to avoid any reflow */}
-            <Skeleton className="h-[40px] w-56 rounded-lg" />
-            <Skeleton className="mt-3 h-4 w-32 rounded" />
-            <Skeleton className="mt-4 h-5 w-80 rounded" />
-            <Skeleton className="mt-6 h-[220px] w-full rounded-2xl" />
-            <Skeleton className="mt-7 h-24 w-full rounded-xl" />
+            {/* Mirrors the loaded layout's exact box sizes and margins so the
+                skeleton -> content swap causes zero layout shift. Heights and
+                margins measured from the sealed record view:
+                head 76 / when 22 (m 14/22) / list 244 (mb 26). */}
+            <div className="flex h-[76px] items-start justify-between gap-4">
+              <div>
+                <Skeleton className="h-[44px] w-64 rounded-lg" />
+                <Skeleton className="mt-1.5 h-4 w-28 rounded" />
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="size-10 rounded-full" />
+                <Skeleton className="size-10 rounded-full" />
+              </div>
+            </div>
+            <Skeleton className="mt-[14px] mb-[22px] h-[22px] w-96 max-w-full rounded" />
+            <Skeleton className="mb-[26px] h-[244px] w-full rounded-2xl" />
           </div>
         )}
 
@@ -528,11 +540,6 @@ export default function RecordPage() {
                       <FileText className="size-[18px]" />
                     </IconAction>
                   )}
-                  <IconAction label="Share for a dispute"
-                    onClick={() => document.getElementById("dispute-links")
-                      ?.scrollIntoView({ behavior: "smooth", block: "start" })}>
-                    <Share2 className="size-[18px]" />
-                  </IconAction>
                 </div>
               )}
             </div>
