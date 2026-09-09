@@ -2,9 +2,145 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { AuthButton } from "../../components";
+import { AuthButton, Info } from "../../components";
 
 const API = "/backend";
+
+const TIER_INFO = {
+  STEM_PREVIEW: {
+    label: "Isolated stems",
+    tip: "Lets the reviewer LISTEN to your individual stems (no download) to confirm real multi-track production. Hearing separate layers is strong proof it isn't an AI export.",
+  },
+  SESSION: {
+    label: "Full session file",
+    tip: "Lets the reviewer DOWNLOAD your complete .logicx project — your most sensitive file. Only enable this if a reviewer specifically needs it; most disputes are won with the report alone.",
+  },
+};
+
+function SharePanel({ recordId }) {
+  const [shares, setShares] = useState(null);
+  const [stem, setStem] = useState(false);
+  const [session, setSession] = useState(false);
+  const [label, setLabel] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [newLink, setNewLink] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  function load() {
+    fetch(`${API}/records/${recordId}/shares`)
+      .then((r) => (r.ok ? r.json() : { shares: [] }))
+      .then((d) => setShares(d.shares || []))
+      .catch(() => setShares([]));
+  }
+  useEffect(load, [recordId]);
+
+  async function create() {
+    setCreating(true);
+    try {
+      const tiers = ["REPORT", ...(stem ? ["STEM_PREVIEW"] : []), ...(session ? ["SESSION"] : [])];
+      const res = await fetch(`${API}/records/${recordId}/shares`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tiers, label: label.trim() }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.detail || "failed");
+      setNewLink(`${window.location.origin}/s/${body.token}`);
+      setLabel(""); setStem(false); setSession(false);
+      load();
+    } catch (e) { alert(e.message); } finally { setCreating(false); }
+  }
+
+  async function revoke(id) {
+    if (!confirm("Revoke this link? The reviewer will immediately lose access.")) return;
+    await fetch(`${API}/shares/${id}/revoke`, { method: "POST" });
+    load();
+  }
+
+  async function toggleTier(share, tier) {
+    const has = share.tiers.includes(tier);
+    const tiers = has ? share.tiers.filter((t) => t !== tier)
+                      : [...share.tiers, tier];
+    await fetch(`${API}/shares/${share.id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tiers }),
+    });
+    load();
+  }
+
+  return (
+    <div className="sh-panel">
+      <h3>Share for a dispute
+        <Info text="If a distributor flags this track as AI, create a link to send them. They see a plain-language report proving real studio work — no SessionSeal account needed on their end. You control exactly what they can access, and can change or revoke it anytime." />
+      </h3>
+      <p className="hint">
+        Creates one link you paste into the distributor's reply. The report is
+        always included; you choose whether they can also hear stems or download
+        the session.
+      </p>
+
+      <div className="sh-tier">
+        <input type="checkbox" checked readOnly />
+        <span className="lbl"><b>Verification report</b>
+          <span>Always included — the plain-language evidence. Wins most disputes on its own.</span>
+        </span>
+      </div>
+      {["STEM_PREVIEW", "SESSION"].map((t) => (
+        <div className="sh-tier" key={t}>
+          <input type="checkbox"
+            checked={t === "STEM_PREVIEW" ? stem : session}
+            onChange={(e) => (t === "STEM_PREVIEW" ? setStem : setSession)(e.target.checked)} />
+          <span className="lbl"><b>{TIER_INFO[t].label}<Info text={TIER_INFO[t].tip} /></b></span>
+        </div>
+      ))}
+
+      <div className="sh-row">
+        <input type="text" placeholder="Label (e.g. DistroKid ticket #4821)"
+          value={label} onChange={(e) => setLabel(e.target.value)} />
+        <button className="sh-btn" disabled={creating} onClick={create}>
+          {creating ? "Creating…" : "Create link"}
+        </button>
+      </div>
+
+      {newLink && (
+        <div className="sh-link">
+          <code>{newLink}</code>
+          <button className="sh-btn" onClick={() => {
+            navigator.clipboard.writeText(newLink).then(() => {
+              setCopied(true); setTimeout(() => setCopied(false), 1500);
+            });
+          }}>{copied ? "Copied ✓" : "Copy"}</button>
+        </div>
+      )}
+
+      {shares && shares.length > 0 && (
+        <div className="sh-existing">
+          {shares.map((s) => (
+            <div className={`sh-share ${s.status === "REVOKED" ? "sh-revoked" : ""}`} key={s.id}>
+              <b>{s.label || "Untitled share"}</b> — {s.status.toLowerCase()}
+              {s.tiers.filter((t) => t !== "REPORT").length > 0 &&
+                <> · {s.tiers.filter((t) => t !== "REPORT").map((t) => TIER_INFO[t]?.label).join(", ")}</>}
+              <div className="meta">
+                {(s.accesses || []).length} view{(s.accesses || []).length === 1 ? "" : "s"}
+                {(s.accesses || [])[0] && <> · last: {(s.accesses[0].reviewer_email || "anonymous")} on {new Date(s.accesses[0].created_at).toLocaleDateString()}</>}
+              </div>
+              {s.status !== "REVOKED" && (
+                <div className="acts">
+                  <button onClick={() => toggleTier(s, "STEM_PREVIEW")}>
+                    {s.tiers.includes("STEM_PREVIEW") ? "Disable stems" : "Enable stems"}
+                  </button>
+                  <button onClick={() => toggleTier(s, "SESSION")}>
+                    {s.tiers.includes("SESSION") ? "Disable session" : "Enable session"}
+                  </button>
+                  <button onClick={() => revoke(s.id)}>Revoke</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Mark() {
   return (
@@ -175,6 +311,8 @@ export default function RecordPage() {
                 )}
               </div>
             )}
+
+            {sealed && <SharePanel recordId={rec.id} />}
 
             <section className="db-verifs">
               <h2>Verification history</h2>

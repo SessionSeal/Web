@@ -9,6 +9,37 @@ export function fmtBytes(n) {
   return `${(n / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+// A small "?" that reveals a plain-language explanation on hover/tap. Used
+// everywhere in the share flow so we never assume the reader knows the terms.
+export function Info({ text }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="ss-info" style={{ position: "relative", display: "inline-flex" }}>
+      <button type="button" aria-label="What does this mean?"
+        onClick={() => setOpen((o) => !o)}
+        onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}
+        style={{
+          width: 16, height: 16, borderRadius: "50%", cursor: "help",
+          border: "1px solid var(--border-strong)", background: "transparent",
+          color: "var(--muted)", fontSize: 10, fontWeight: 700, lineHeight: 1,
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          padding: 0, marginLeft: 6, verticalAlign: "middle",
+        }}>?</button>
+      {open && (
+        <span role="tooltip" style={{
+          position: "absolute", bottom: "calc(100% + 8px)", left: "50%",
+          transform: "translateX(-50%)", width: 260, zIndex: 90,
+          background: "var(--panel-2)", color: "var(--text)",
+          border: "1px solid var(--border-strong)", borderRadius: 10,
+          padding: "10px 12px", fontSize: "0.8rem", fontWeight: 400,
+          lineHeight: 1.5, textAlign: "left",
+          boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
+        }}>{text}</span>
+      )}
+    </span>
+  );
+}
+
 export function Mark() {
   // The sealed record: solid disc, knocked-out core, groove opening from
   // it (see sessionseal-brand/BRAND.md). Knockouts let the ground show
