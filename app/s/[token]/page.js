@@ -15,6 +15,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const API = "/backend";
 
+// Reviewer FAQ lives on the marketing site. Restrained deep-links: a "new
+// here" pointer up top, a footer row of common questions, and a couple of
+// contextual links where a term genuinely needs more than one sentence.
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://www.sessionseal.com";
+const faq = (slug) => `${SITE}/faq/${slug}`;
+
 // Verdict band -> the accent it paints with. STRONG = green (real work found),
 // MODERATE = brand blue, WEAK = amber, CONTRADICTED = red.
 const BAND_STYLE = {
@@ -254,6 +260,10 @@ export default function ReviewerPage() {
           <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-1.5 border-t border-border pt-4 text-sm text-muted-foreground">
             <span><b className="text-foreground">{report.title}</b> by {report.artist}</span>
             <span>Sealed {fmtDate(report.sealed_at)}</span>
+            <a href={faq("what-is-this-page")} target="_blank" rel="noopener noreferrer"
+              className="text-brand hover:underline">
+              New here? How to read this page
+            </a>
           </div>
         </section>
 
@@ -376,6 +386,13 @@ export default function ReviewerPage() {
                 )}
               </div>
 
+              <p className="mt-3 text-xs text-muted-foreground">
+                <a href={faq("how-scoring-works")} target="_blank" rel="noopener noreferrer"
+                  className="text-brand hover:underline">
+                  How is this scored, and can it be faked?
+                </a>
+              </p>
+
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full border-collapse text-sm">
                   <thead>
@@ -412,9 +429,40 @@ export default function ReviewerPage() {
           )}
         </section>
 
-        <footer className="mt-10 text-center text-xs text-muted-foreground">
-          Verified with SessionSeal. This page reflects the record's current shared
-          state and is logged for the musician.
+        <footer className="mt-12 border-t border-border pt-7">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Common questions
+          </div>
+          <ul className="mt-3 flex flex-col gap-2 text-sm sm:flex-row sm:flex-wrap sm:gap-x-6">
+            <li>
+              <a href={faq("does-this-prove-a-human-made-it")} target="_blank" rel="noopener noreferrer"
+                className="text-brand hover:underline">
+                Does this prove a human made it?
+              </a>
+            </li>
+            <li>
+              <a href={faq("self-attested-signature")} target="_blank" rel="noopener noreferrer"
+                className="text-brand hover:underline">
+                Should I trust a self-attested signature?
+              </a>
+            </li>
+            <li>
+              <a href={faq("can-i-rely-on-this")} target="_blank" rel="noopener noreferrer"
+                className="text-brand hover:underline">
+                Can I rely on this in a dispute?
+              </a>
+            </li>
+            <li>
+              <a href={`${SITE}/faq`} target="_blank" rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground hover:underline">
+                All reviewer questions
+              </a>
+            </li>
+          </ul>
+          <p className="mt-6 text-xs text-muted-foreground">
+            Verified with SessionSeal. This page reflects the record's current shared
+            state and is logged for the musician.
+          </p>
         </footer>
       </main>
     </div>
