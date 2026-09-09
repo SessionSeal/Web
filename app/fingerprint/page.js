@@ -16,7 +16,7 @@ const PRESETS = {
 const DEFAULT_OPTS = PRESETS.spotify;
 
 function fmtBytes(n) {
-  if (n == null) return "—";
+  if (n == null) return "-";
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(2)} MB`;
 }
@@ -27,8 +27,8 @@ function LoudnessRow({ label, l }) {
     <div>
       <dt>{label}</dt>
       <dd>
-        {l.integrated_lufs ?? "—"} LUFS integrated · true peak {l.true_peak_dbtp ?? "—"} dBTP
-        · LRA {l.loudness_range_lu ?? "—"} LU
+        {l.integrated_lufs ?? "-"} LUFS integrated · true peak {l.true_peak_dbtp ?? "-"} dBTP
+        · LRA {l.loudness_range_lu ?? "-"} LU
       </dd>
     </div>
   );
@@ -163,14 +163,14 @@ export default function FingerprintLab() {
       <h1>Fingerprint lab</h1>
       <p className="subtitle">
         Fingerprint a track, then run it through the processing a streaming
-        platform applies — lossy encoding, loudness normalization, resampling —
+        platform applies, lossy encoding, loudness normalization, resampling,
         and see how well the perceptual fingerprint survives.
       </p>
 
       <section className="card">
         <h2>1. Audio</h2>
         <label className="field">
-          <span>Audio file (any format — e.g. <code>sample-files/master.wav</code>)</span>
+          <span>Audio file (any format, e.g. <code>sample-files/master.wav</code>)</span>
           <input type="file" accept="audio/*" onChange={(e) => setFile(e.target.files[0] || null)} />
         </label>
         <button className="primary" disabled={!!busy} onClick={analyze}>
@@ -185,7 +185,7 @@ export default function FingerprintLab() {
           Pick a preset or combine steps manually. Loudness targets: −14 LUFS
           (Spotify/YouTube/Tidal), −16 (Apple Music), −11 (Spotify “loud”), −23
           (EBU broadcast). Note: some platforms apply loudness as playback gain
-          rather than re-rendering — rendering it here is the harsher test.
+          rather than re-rendering, rendering it here is the harsher test.
         </p>
         <div className="preset-row">
           {Object.entries(PRESETS).map(([key, p]) => (
@@ -238,11 +238,11 @@ export default function FingerprintLab() {
           <label className="field">
             <span>Encode passes (generation loss)</span>
             <select value={opts.generations} onChange={(e) => setOpt("generations", e.target.value)} disabled={opts.codec === "none"}>
-              <option value="1">1 — single encode</option>
-              <option value="2">2 — rip &amp; re-upload</option>
+              <option value="1">1, single encode</option>
+              <option value="2">2, rip &amp; re-upload</option>
               <option value="3">3</option>
-              <option value="5">5 — trash</option>
-              <option value="10">10 — deep-fried</option>
+              <option value="5">5, trash</option>
+              <option value="10">10, deep-fried</option>
             </select>
           </label>
         </div>
@@ -259,7 +259,7 @@ export default function FingerprintLab() {
             <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap" }}>
               <span className="bignum">{(cmp.similarity * 100).toFixed(2)}%</span>
               <span className={`badge ${cmp.would_relink ? "ok" : "warn"}`}>
-                {cmp.would_relink ? "survives — would re-link" : "LOST — below re-link threshold"}
+                {cmp.would_relink ? "survives, would re-link" : "LOST, below re-link threshold"}
                 {` (threshold ${(cmp.verify_threshold * 100).toFixed(0)}%)`}
               </span>
             </div>

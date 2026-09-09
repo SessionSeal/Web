@@ -20,7 +20,7 @@ export default function NotFound() {
           This side of the tape is blank.
         </h1>
         <p style={{ color: "var(--muted)", marginBottom: 30 }}>
-          The page you&apos;re looking for isn&apos;t on this reel — it may
+          The page you&apos;re looking for isn&apos;t on this reel, it may
           have moved, or never existed. Your records are unaffected.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>

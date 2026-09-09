@@ -50,7 +50,7 @@ export default function Compress() {
       <main className="wz-main">
         <h1>Hear what streaming does to your track.</h1>
         <p className="lede">
-          Upload any audio and run it through a platform&apos;s compression —
+          Upload any audio and run it through a platform&apos;s compression,
           the same codec, loudness, and sample-rate treatment your release
           gets. Download the result and hear it for yourself.
         </p>
@@ -58,7 +58,7 @@ export default function Compress() {
         <Drop
           filled={!!file}
           big={file ? `✓ ${file.name}` : "Drop your audio here"}
-          small={file ? fmtBytes(file.size) : "Any format — or click to browse"}
+          small={file ? fmtBytes(file.size) : "Any format, or click to browse"}
           onClick={() => input.current.click()}
           onFiles={(fs) => setFile(fs[0])}
         />
@@ -101,7 +101,7 @@ export default function Compress() {
         <div className="wz-tip" style={{ marginTop: 26 }}>
           <b>Sealed your track already?</b> Compress the release master here,
           then <a className="navlink" href="/verify">verify the compressed
-          copy</a> — it will still trace back to your record.
+          copy</a>, it will still trace back to your record.
         </div>
       </main>
     </div>

@@ -23,7 +23,7 @@ export default function Error({ error, reset }) {
         </h1>
         <p style={{ color: "var(--muted)", marginBottom: 30 }}>
           An unexpected error interrupted playback. Your sealed records are
-          safe — nothing on the server is affected. Try again, or head back
+          safe, nothing on the server is affected. Try again, or head back
           to the start.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>

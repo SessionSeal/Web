@@ -1,6 +1,6 @@
 "use client";
 
-// Replaces the root layout when it crashes — globals.css is NOT loaded
+// Replaces the root layout when it crashes, globals.css is NOT loaded
 // here, so everything is inlined and self-contained.
 export default function GlobalError({ error, reset }) {
   return (

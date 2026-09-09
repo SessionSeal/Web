@@ -22,7 +22,7 @@ function GoogleG() {
 }
 
 function safeNext(raw) {
-  // relative paths only — never an open redirect
+  // relative paths only, never an open redirect
   return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
 }
 
@@ -51,7 +51,7 @@ function SignIn() {
           <ul className="si-points">
             <li>Seal your stems, master, and session in minutes</li>
             <li>Your proof exists before anyone questions you</li>
-            <li>Every copy traces back — even after streaming</li>
+            <li>Every copy traces back, even after streaming</li>
           </ul>
         </div>
         <div className="si-wave">
@@ -74,9 +74,9 @@ function SignIn() {
             Continue with Google
           </button>
           <p className="si-fine">
-            More sign-in options — Apple and email — are coming. By
+            More sign-in options, Apple and email, are coming. By
             continuing you agree that records prove custody, integrity,
-            coherence, and priority — never authorship.
+            coherence, and priority, never authorship.
           </p>
         </div>
         <a className="si-back" href={SITE_URL}>← Back to the site</a>

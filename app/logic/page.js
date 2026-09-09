@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 const API = "/backend";
 
 function fmtBytes(n) {
-  if (n == null) return "—";
+  if (n == null) return "-";
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(2)} MB`;
@@ -78,7 +78,7 @@ function StringsExplorer({ strings }) {
         ))}
         {filtered.length > shown.length && (
           <p className="status-note">
-            showing {shown.length} of {filtered.length} — refine the search to see more
+            showing {shown.length} of {filtered.length}, refine the search to see more
           </p>
         )}
         {filtered.length === 0 && <p className="status-note">no matches</p>}
@@ -193,7 +193,7 @@ export default function LogicInspector() {
       setReport(body);
     } catch (err) {
       setError(
-        `${err.message || err} — if this mentions a network/CORS failure, check that ` +
+        `${err.message || err}, if this mentions a network/CORS failure, check that ` +
           "the backend is running: uvicorn app.main:app --port 8000"
       );
     } finally {
@@ -268,7 +268,7 @@ export default function LogicInspector() {
         shown; the coverage table at the bottom accounts for every file.
       </p>
       <p className="disclaimer">
-        Logic&apos;s core ProjectData file is a proprietary, undocumented binary —
+        Logic&apos;s core ProjectData file is a proprietary, undocumented binary,
         it cannot be decoded, so for it (and any other unrecognized binary) the
         parseable limit is metadata + embedded strings, which is what you&apos;ll
         see below. Every plist, media file, image, and text file is fully parsed.
@@ -278,7 +278,7 @@ export default function LogicInspector() {
         <h2>Inspect a project</h2>
         <p className="hint">
           Easiest: <strong>drag your .logicx straight from Finder</strong> onto
-          the drop zone — macOS treats .logicx as a package, so folder-picker
+          the drop zone, macOS treats .logicx as a package, so folder-picker
           dialogs won&apos;t let you select it, but dragging works. A zip of the
           package works too. Demo: <code>sample-files/DemoProject.logicx</code>.
         </p>
@@ -299,7 +299,7 @@ export default function LogicInspector() {
           <label className="field">
             <span>
               …or pick a folder (note: the dialog can&apos;t select a .logicx
-              package itself — use drag &amp; drop for that)
+              package itself, use drag &amp; drop for that)
             </span>
             <input type="file" name="folder" webkitdirectory="" multiple />
           </label>
@@ -425,7 +425,7 @@ export default function LogicInspector() {
           )}
 
           <section className="card">
-            <h2>Coverage — every file, how it was handled</h2>
+            <h2>Coverage, every file, how it was handled</h2>
             <table className="coverage">
               <thead>
                 <tr><th>path</th><th>size</th><th>handled as</th></tr>

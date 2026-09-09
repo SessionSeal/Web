@@ -14,7 +14,7 @@ const PRESETS = {
 };
 
 function fmtBytes(n) {
-  if (n == null) return "—";
+  if (n == null) return "-";
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(2)} MB`;
 }
@@ -122,13 +122,13 @@ export default function WatermarkLab() {
         Robust to lossy codecs, loudness normalization, and resampling (verified
         against every preset below, including five encode generations). Destroyed
         by time-stretching or pitch-shifting. Detection requires the platform&apos;s
-        PN key — this is an experiment in robustness, not a security guarantee.
+        PN key, this is an experiment in robustness, not a security guarantee.
       </p>
 
       <section className="card">
         <h2>1. Embed a watermark</h2>
         <p className="hint">
-          The audio must be at least 10 seconds long — one full ID frame is
+          The audio must be at least 10 seconds long, one full ID frame is
           embedded per 10-second block. Try <code>sample-files/master.wav</code>.
         </p>
         <form onSubmit={embed}>
@@ -154,7 +154,7 @@ export default function WatermarkLab() {
           <div className="result">
             <span className={`badge ${wmInfo.self_check.id_matches ? "ok" : "warn"}`}>
               {wmInfo.self_check.id_matches
-                ? "embedded — self-check extraction matches"
+                ? "embedded, self-check extraction matches"
                 : "embedded, but self-check failed"}
             </span>
             <dl className="kv" style={{ marginTop: 10 }}>
@@ -176,7 +176,7 @@ export default function WatermarkLab() {
         <p className="hint">
           {wmInfo
             ? "Run the watermarked file through a platform chain, then download the result and check it in section 3."
-            : "Embed a watermark first — this section processes that watermarked file."}
+            : "Embed a watermark first, this section processes that watermarked file."}
         </p>
         <div className="preset-row">
           {Object.entries(PRESETS).map(([key, p]) => (
@@ -223,11 +223,11 @@ export default function WatermarkLab() {
           <label className="field">
             <span>Encode passes</span>
             <select value={opts.generations} onChange={(e) => setOpt("generations", e.target.value)} disabled={opts.codec === "none"}>
-              <option value="1">1 — single encode</option>
-              <option value="2">2 — rip &amp; re-upload</option>
+              <option value="1">1, single encode</option>
+              <option value="2">2, rip &amp; re-upload</option>
               <option value="3">3</option>
-              <option value="5">5 — trash</option>
-              <option value="10">10 — deep-fried</option>
+              <option value="5">5, trash</option>
+              <option value="10">10, deep-fried</option>
             </select>
           </label>
         </div>
@@ -262,7 +262,7 @@ export default function WatermarkLab() {
       <section className="card">
         <h2>3. Check for a watermark</h2>
         <p className="hint">
-          Upload any audio in any format — the compressed file from section 2, a
+          Upload any audio in any format, the compressed file from section 2, a
           re-encode of it, anything. Extraction is blind: no original needed.
         </p>
         <form onSubmit={check}>

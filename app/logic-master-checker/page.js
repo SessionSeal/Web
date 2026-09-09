@@ -103,7 +103,7 @@ export default function LogicMasterChecker() {
       <p className="subtitle">
         Same-origin confidence: did these stems, this master, and this Logic
         project come from one session? Audio-DNA containment matching, superset
-        evidence, and metadata consistency — each check reports match /
+        evidence, and metadata consistency, each check reports match /
         contradiction / not-evaluable, and only contradictions subtract.
       </p>
       <p className="disclaimer">

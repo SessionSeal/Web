@@ -17,7 +17,7 @@ const PRESETS = {
 const STEPS = ["Your track", "Your stems", "Your session", "Seal it"];
 
 function fmtBytes(n) {
-  if (n == null) return "—";
+  if (n == null) return "-";
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(2)} MB`;
 }
@@ -208,7 +208,7 @@ export default function ArtistApp() {
 
   async function packProjectZip() {
     // A picked .zip uploads as-is; folder-picked/dragged files are zipped
-    // in the browser (store-level, no compression — speed over size).
+    // in the browser (store-level, no compression, speed over size).
     if (project.zip) return project.zip;
     setProgress({ pct: 2, stage: "Packing your session" });
     const entries = {};
@@ -277,7 +277,7 @@ export default function ArtistApp() {
         bump();
       }
 
-      // 3. seal — server-side work estimated 40-95% in pipeline order
+      // 3. seal, server-side work estimated 40-95% in pipeline order
       const t0 = Date.now();
       ticker = setInterval(() => {
         const t = (Date.now() - t0) / 1000;
@@ -304,7 +304,7 @@ export default function ArtistApp() {
       setError(
         /NetworkError|fetch failed|Load failed|network/i.test(msg)
           ? "The upload failed before reaching the server. This usually " +
-            "means the browser couldn't read one of the files — if you " +
+            "means the browser couldn't read one of the files, if you " +
             "picked the .logicx from a file dialog, go back and drag it " +
             "into the box instead (or zip it first). Also make sure the " +
             "project isn't open in Logic while uploading."
@@ -393,7 +393,7 @@ export default function ArtistApp() {
           <>
             <h1>First, the finished track.</h1>
             <p className="lede">
-              Your name and your final bounced master — the exact file you
+              Your name and your final bounced master, the exact file you
               plan to release.
             </p>
             <label className="wz-field">
@@ -418,7 +418,7 @@ export default function ArtistApp() {
             <Drop
               filled={!!master}
               big={master ? `✓ ${master.name}` : "Drop your master here"}
-              small={master ? fmtBytes(master.size) : "WAV straight from your bounce — or click to browse"}
+              small={master ? fmtBytes(master.size) : "WAV straight from your bounce, or click to browse"}
               onClick={() => masterInput.current.click()}
               onDrop={(e) => { const [f] = dropFiles(e, false); if (f) setMaster(f); }}
             />
@@ -442,14 +442,14 @@ export default function ArtistApp() {
           <>
             <h1>Now, the layers it&apos;s made of.</h1>
             <p className="lede">
-              Your stems — one file per layer, exported with the mix exactly as
+              Your stems, one file per layer, exported with the mix exactly as
               it was when you bounced the master. They&apos;re how we verify
               the track is really yours, and they never leave your record.
             </p>
             <Drop
               filled={stems.length >= 2}
               big={stems.length ? `✓ ${stems.length} stems added` : "Drop your stems here"}
-              small="Two or more audio files — or click to browse"
+              small="Two or more audio files, or click to browse"
               onClick={() => stemsInput.current.click()}
               onDrop={(e) => { const fs = dropFiles(e, true); if (fs.length) setStems((cur) => [...cur, ...fs]); }}
             />
@@ -491,7 +491,7 @@ export default function ArtistApp() {
           <>
             <h1>Last, the session itself.</h1>
             <p className="lede">
-              Your Logic project, exactly as it is — mess, muted tracks, old
+              Your Logic project, exactly as it is, mess, muted tracks, old
               takes and all. The mess is the evidence: it&apos;s what someone
               who only stole your finished song can never fake.
             </p>
@@ -500,7 +500,7 @@ export default function ArtistApp() {
               big={project ? `✓ ${project.label}` : "Drag your .logicx here, straight from Finder"}
               small={project
                 ? "Session received"
-                : "Dragging works best — or click to browse (.zip works from the dialog)"}
+                : "Dragging works best, or click to browse (.zip works from the dialog)"}
               onClick={() => projInput.current.click()}
               onDrop={onProjectDrop}
             />
@@ -512,7 +512,7 @@ export default function ArtistApp() {
                 if (!f.name.toLowerCase().endsWith(".zip") || f.size === 0) {
                   setError(
                     "Browsers can't read a Logic project chosen from the file " +
-                    "dialog — please drag the .logicx into the box instead " +
+                    "dialog, please drag the .logicx into the box instead " +
                     "(straight from Finder, no zip needed). A .zip of the " +
                     "project also works from the dialog."
                   );
@@ -557,7 +557,7 @@ export default function ArtistApp() {
                     setError(
                       "No Logic project found in that folder. Choose the " +
                       "folder that contains your .logicx (for example your " +
-                      "Logic Projects folder) — or drag the project in."
+                      "Logic Projects folder), or drag the project in."
                     );
                     return;
                   }
@@ -620,7 +620,7 @@ export default function ArtistApp() {
                   </div>
                 </div>
                 <div className="sub">
-                  Verifying and sealing your record — this usually takes about
+                  Verifying and sealing your record, this usually takes about
                   a minute.
                 </div>
                 <div className="bar">
@@ -649,11 +649,11 @@ export default function ArtistApp() {
                   {record.coherence.verified ? "✓" : "!"}
                 </span>
                 <span>
-                  Your stems rebuild your master —{" "}
+                  Your stems rebuild your master,{" "}
                   {(record.coherence.confidence * 100).toFixed(1)}% match
                   {!record.coherence.verified && (
                     <span className="detail">
-                      Below the verification bar — the record is sealed, but it
+                      Below the verification bar, the record is sealed, but it
                       says coherence was not verified.
                     </span>
                   )}
@@ -664,10 +664,10 @@ export default function ArtistApp() {
                   {so.band === "strong" ? "✓" : "!"}
                 </span>
                 <span>
-                  Your session checks out — {so.score}/100 ({so.band})
+                  Your session checks out, {so.score}/100 ({so.band})
                   <span className="detail">
                     Takes found inside your stems, edit history, recording
-                    dates — the things only the real session has.
+                    dates, the things only the real session has.
                   </span>
                 </span>
               </li>
@@ -684,17 +684,17 @@ export default function ArtistApp() {
               <li>
                 <span className="ic ok">✓</span>
                 <span>
-                  Sound fingerprint saved —{" "}
+                  Sound fingerprint saved,{" "}
                   {Math.round(record.fingerprint.seconds)}s analyzed
                 </span>
               </li>
               <li>
                 <span className="ic ok">✓</span>
                 <span>
-                  Signed &amp; timestamped — set in stone
+                  Signed &amp; timestamped, set in stone
                   <span className="detail">
                     Proves you held these exact files, unchanged, together, at
-                    this moment. Does not prove {record.does_not_prove} — no
+                    this moment. Does not prove {record.does_not_prove}, no
                     honest system can.
                   </span>
                 </span>
@@ -729,7 +729,7 @@ export default function ArtistApp() {
             <div className="wz-panel">
               <h3>1 · Release this file</h3>
               <p className="ph">
-                This is your master with the watermark and signature inside —
+                This is your master with the watermark and signature inside,
                 the copy to send to your distributor.
               </p>
               <a className="wz-btn" style={{ textDecoration: "none" }}
@@ -742,7 +742,7 @@ export default function ArtistApp() {
             <div className="wz-panel">
               <h3>2 · See it survive streaming</h3>
               <p className="ph">
-                Simulate what a platform does to your file — compress it, then
+                Simulate what a platform does to your file, compress it, then
                 link the mangled copy right back in step 3.
               </p>
               <div className="preset-row">
@@ -769,8 +769,8 @@ export default function ArtistApp() {
             <div className="wz-panel">
               <h3>3 · Link any copy back</h3>
               <p className="ph">
-                Drop any version of your track — the streamed copy, a rip,
-                anything — and watch it find its way home.
+                Drop any version of your track, the streamed copy, a rip,
+                anything, and watch it find its way home.
               </p>
               <button className="wz-btn ghost" disabled={!!busy}
                 onClick={() => linkInput.current.click()}>
@@ -786,14 +786,14 @@ export default function ArtistApp() {
                       Found its record via{" "}
                       {linkResult.linked_via.startsWith("watermark")
                         ? "the watermark (exact match, corroborated by sound)"
-                        : "the sound fingerprint"} — artist{" "}
+                        : "the sound fingerprint"}, artist{" "}
                       <b>{linkResult.record.artist}</b>, sealed{" "}
                       {linkResult.record.registered_at_utc}.
                     </p>
                   ) : linkResult.copy_attack_suspected ? (
                     <div className="wz-flag">
                       A watermark was found, but the audio doesn&apos;t match
-                      that record — this looks like a copied/transplanted
+                      that record, this looks like a copied/transplanted
                       watermark, so it was not linked.
                     </div>
                   ) : (

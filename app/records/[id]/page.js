@@ -68,7 +68,7 @@ function relTime(iso) {
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
-// The shared create/edit modal — same shape for both flows.
+// The shared create/edit modal, same shape for both flows.
 function ShareModal({ recordId, existing, onClose, onSaved }) {
   const editing = !!existing;
   const [label, setLabel] = useState(existing?.label || "");
@@ -448,7 +448,7 @@ function Mark() {
 }
 
 function fmtDateTime(iso) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleString("en-GB", {
     day: "numeric", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit",

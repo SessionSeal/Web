@@ -14,7 +14,7 @@ const PRESETS = {
 };
 
 function fmtBytes(n) {
-  if (n == null) return "—";
+  if (n == null) return "-";
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(2)} MB`;
 }
@@ -55,9 +55,9 @@ function RecoveryPanels({ wm, fp, expectedId }) {
           </span>
         </h3>
         <dl className="kv">
-          <div><dt>extracted ID</dt><dd style={{ fontFamily: "ui-monospace, monospace" }}>{wm.extracted_id || "—"}</dd></div>
+          <div><dt>extracted ID</dt><dd style={{ fontFamily: "ui-monospace, monospace" }}>{wm.extracted_id || "-"}</dd></div>
           {expectedId && <div><dt>expected ID</dt><dd style={{ fontFamily: "ui-monospace, monospace" }}>{expectedId}</dd></div>}
-          <div><dt>confidence</dt><dd>{wm.confidence ?? "—"}{wm.blocks_analyzed ? ` (${wm.blocks_crc_valid}/${wm.blocks_analyzed} blocks)` : ""}</dd></div>
+          <div><dt>confidence</dt><dd>{wm.confidence ?? "-"}{wm.blocks_analyzed ? ` (${wm.blocks_crc_valid}/${wm.blocks_analyzed} blocks)` : ""}</dd></div>
           {wm.source && <div><dt>via</dt><dd>{wm.source}</dd></div>}
         </dl>
       </div>
@@ -149,7 +149,7 @@ export default function WaterprintLab() {
         Both protections on one file: embed a watermark ID, register the
         fingerprint, run platform compression, then recover both from the
         damaged copy. The watermark carries an exact ID; the fingerprint
-        recognizes the sound — each covers the other&apos;s blind spots.
+        recognizes the sound, each covers the other&apos;s blind spots.
       </p>
 
       <section className="card">
@@ -219,11 +219,11 @@ export default function WaterprintLab() {
             <label className="field">
               <span>Encode passes</span>
               <select value={opts.generations} onChange={(e) => setOpt("generations", e.target.value)} disabled={opts.codec === "none"}>
-                <option value="1">1 — single encode</option>
-                <option value="2">2 — rip &amp; re-upload</option>
+                <option value="1">1, single encode</option>
+                <option value="2">2, rip &amp; re-upload</option>
                 <option value="3">3</option>
-                <option value="5">5 — trash</option>
-                <option value="10">10 — deep-fried</option>
+                <option value="5">5, trash</option>
+                <option value="10">10, deep-fried</option>
               </select>
             </label>
           </div>
@@ -264,8 +264,8 @@ export default function WaterprintLab() {
         <section className="card">
           <h2>2. Check any copy against this run</h2>
           <p className="hint">
-            Upload anything — the compressed copy, a re-encode of it, a totally
-            different song — and it&apos;s tested against this run&apos;s
+            Upload anything, the compressed copy, a re-encode of it, a totally
+            different song, and it&apos;s tested against this run&apos;s
             registered fingerprint and expected ID.
           </p>
           <form onSubmit={check}>

@@ -24,14 +24,14 @@ function Mark() {
 }
 
 function fmtDate(iso) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric", month: "short", year: "numeric",
   });
 }
 
 function fmtDateTime(iso) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleString("en-GB", {
     day: "numeric", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit",
@@ -66,7 +66,7 @@ export default function Dashboard() {
   }, []);
 
   // Show sealed records and any that are actively sealing/failed; hide
-  // abandoned DRAFTs (uploads that never finished — noise, not catalog).
+  // abandoned DRAFTs (uploads that never finished, noise, not catalog).
   const visible = (records || []).filter((r) => r.status !== "DRAFT");
   const sealed = visible.filter((r) => r.status === "SEALED");
   const firstSeal = sealed.length
@@ -100,7 +100,7 @@ export default function Dashboard() {
             <section className="db-hero">
               <h1>Your catalog starts here.</h1>
               <p>
-                Seal a track once — your master, your stems, your session —
+                Seal a track once, your master, your stems, your session,
                 and you get a timestamped record that proves the work is
                 yours. Before anyone questions it.
               </p>
@@ -113,12 +113,12 @@ export default function Dashboard() {
                 <div className="db-step">
                   <span className="num">1</span>
                   <b>Upload</b>
-                  <p>Your finished master, your stems, and your session file — dropped in once.</p>
+                  <p>Your finished master, your stems, and your session file, dropped in once.</p>
                 </div>
                 <div className="db-step">
                   <span className="num">2</span>
                   <b>Verify</b>
-                  <p>We check the parts belong together — your stems have to rebuild your master.</p>
+                  <p>We check the parts belong together, your stems have to rebuild your master.</p>
                 </div>
                 <div className="db-step">
                   <span className="num">3</span>
@@ -134,7 +134,7 @@ export default function Dashboard() {
                 <div className="db-way">
                   <div className="glyph">◌</div>
                   <b>An inaudible watermark</b>
-                  <p>Hidden in the audio itself, below hearing — it survives compression and follows every copy.</p>
+                  <p>Hidden in the audio itself, below hearing, it survives compression and follows every copy.</p>
                 </div>
                 <div className="db-way">
                   <div className="glyph">≈</div>

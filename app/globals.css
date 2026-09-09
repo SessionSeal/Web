@@ -36,7 +36,7 @@
 
 /* box-sizing is safe to keep universal. margin/padding reset is NOT applied
    with `*` because an unlayered `* { margin:0 }` overrides Tailwind's layered
-   margin/padding utilities (mb-5, py-3, …) — it broke all Tailwind spacing.
+   margin/padding utilities (mb-5, py-3, …), it broke all Tailwind spacing.
    Tailwind's preflight already zeroes default element margins. */
 * {
   box-sizing: border-box;
@@ -2095,7 +2095,7 @@ button:focus-visible,
 }
 .db-welcome p { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
 
-/* high-visibility nav CTA — matches the Astro landing's .ld-pill.
+/* high-visibility nav CTA, matches the Astro landing's .ld-pill.
    Scoped under .wz-top .links to beat that rule's grey `color: var(--muted)`. */
 .wz-top .links a.db-newpill.primary {
   background: #fff; color: #0b0d11; border-color: #fff; font-weight: 700;

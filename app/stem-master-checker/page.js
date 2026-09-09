@@ -37,7 +37,7 @@ export default function StemMasterChecker() {
       <h1>Stem ↔ master checker</h1>
       <p className="subtitle">
         Do these stems actually reconstruct this master? The stems are summed
-        into a mixdown and compared to the master by perceptual fingerprint —
+        into a mixdown and compared to the master by perceptual fingerprint,
         byte differences from mastering don&apos;t matter, sound does.
       </p>
 

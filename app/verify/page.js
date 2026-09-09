@@ -40,15 +40,15 @@ export default function Verify() {
       <main className="wz-main">
         <h1>Verify a copy.</h1>
         <p className="lede">
-          Upload any version of a track — a download, a stream rip, a file
-          someone sent you — and check whether it matches a sealed record.
+          Upload any version of a track, a download, a stream rip, a file
+          someone sent you, and check whether it matches a sealed record.
           If it does, you get the record and its signed manifest.
         </p>
 
         <Drop
           filled={!!file}
           big={file ? `✓ ${file.name}` : "Drop the audio here"}
-          small={file ? fmtBytes(file.size) : "Any format — or click to browse"}
+          small={file ? fmtBytes(file.size) : "Any format, or click to browse"}
           onClick={() => input.current.click()}
           onFiles={(fs) => { setFile(fs[0]); run(fs[0]); }}
         />
@@ -82,7 +82,7 @@ export default function Verify() {
             ) : result.copy_attack_suspected ? (
               <div className="wz-flag" style={{ marginTop: 24 }}>
                 A watermark was detected, but the audio does not match the
-                record it points to — consistent with a copied or
+                record it points to, consistent with a copied or
                 transplanted watermark. Not linked.
               </div>
             ) : (
