@@ -1,4 +1,33 @@
 @import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+/* ShadCN semantic tokens, mapped to SessionSeal's brand values so ShadCN
+   components render in our dark/electric-blue look automatically. */
+@theme inline {
+  --color-background: #08090c;
+  --color-foreground: #f2f3f5;
+  --color-card: #10131a;
+  --color-card-foreground: #f2f3f5;
+  --color-popover: #171b23;
+  --color-popover-foreground: #f2f3f5;
+  --color-primary: #f2f3f5;
+  --color-primary-foreground: #08090c;
+  --color-secondary: #171b23;
+  --color-secondary-foreground: #f2f3f5;
+  --color-muted: #171b23;
+  --color-muted-foreground: #8a919e;
+  --color-accent: #4d7eff;
+  --color-accent-foreground: #ffffff;
+  --color-destructive: #f87171;
+  --color-destructive-foreground: #ffffff;
+  --color-border: rgba(255, 255, 255, 0.16);
+  --color-input: rgba(255, 255, 255, 0.16);
+  --color-ring: #4d7eff;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font-sans: "Hanken Grotesk", -apple-system, "Segoe UI", Roboto, sans-serif;
+}
 
 * {
   box-sizing: border-box;

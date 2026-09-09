@@ -1,5 +1,6 @@
 import "./globals.css";
 import Providers from "./providers";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata = {
   title: "SessionSeal — prove your music is yours",
@@ -10,7 +11,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body><Providers>{children}</Providers></body>
+      <body><Providers>{children}<Toaster richColors position="bottom-center" /></Providers></body>
     </html>
   );
 }

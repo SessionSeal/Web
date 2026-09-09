@@ -2,7 +2,44 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { AuthButton, Info, IconButton, Icons, Modal, Switch } from "../../components";
+import { toast } from "sonner";
+import {
+  Download, FileText, Share2, Link2, Copy, Check, Trash2, ChevronRight,
+  AudioLines, FolderOpen, FileCheck,
+} from "lucide-react";
+import { AuthButton, Info } from "../../components";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip, TooltipContent, TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+function IconAction({ label, href, download, onClick, children }) {
+  const btn = (
+    <Button variant="outline" size="icon" className="rounded-full"
+      asChild={!!href} onClick={onClick} aria-label={label}>
+      {href
+        ? <a href={href} {...(download ? {} : { target: "_blank", rel: "noopener noreferrer" })}>{children}</a>
+        : children}
+    </Button>
+  );
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{btn}</TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 const API = "/backend";
 
@@ -11,13 +48,13 @@ const TIER_META = {
     label: "Isolated stems",
     sub: "Reviewer can listen to each stem in the browser (no download).",
     tip: "Hearing the separate layers of the song (drums, vocals, and so on) is strong confirmation of real multi-track production. An AI export has no stems.",
-    icon: Icons.wave,
+    Icon: AudioLines,
   },
   SESSION: {
     label: "Full session file",
     sub: "Reviewer can download your complete project file.",
     tip: "Your most sensitive file. Only enable this if a reviewer specifically asks. Most disputes are won with the report alone.",
-    icon: Icons.folder,
+    Icon: FolderOpen,
   },
 };
 
@@ -58,6 +95,7 @@ function ShareModal({ recordId, existing, onClose, onSaved }) {
           method: "PATCH", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tiers: tierArr, label: label.trim() }),
         });
+        toast.success("Access updated");
         onSaved(null);
       } else {
         const res = await fetch(`${API}/records/${recordId}/shares`, {
@@ -71,86 +109,128 @@ function ShareModal({ recordId, existing, onClose, onSaved }) {
         if (!res.ok) throw new Error(body.detail || "failed");
         onSaved(`${window.location.origin}/s/${body.token}`);
       }
-    } catch (e) { alert(e.message); setBusy(false); }
+    } catch (e) { toast.error(e.message); setBusy(false); }
   }
 
   return (
-    <Modal
-      title={editing ? "Manage access" : "Create a dispute link"}
-      onClose={onClose}
-      footer={
-        <>
-          <button className="sh-ghost" onClick={onClose}>Cancel</button>
-          <button className="sh-primary" disabled={busy} onClick={save}>
-            {busy ? "Saving…" : editing ? "Save changes" : "Create link"}
-          </button>
-        </>
-      }>
-      <label className="sh-field">
-        <span>Label<Info text="A private note to help you remember which dispute this link is for. The reviewer never sees it." /></span>
-        <input type="text" value={label} placeholder="e.g. DistroKid ticket #4821"
-          onChange={(e) => setLabel(e.target.value)} />
-      </label>
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-[460px]">
+        <DialogHeader>
+          <DialogTitle className="font-serif text-2xl font-normal">
+            {editing ? "Manage access" : "Create a dispute link"}
+          </DialogTitle>
+          <DialogDescription>
+            Choose exactly what the reviewer can see. You can change this anytime.
+          </DialogDescription>
+        </DialogHeader>
 
-      <div className="sh-access">
-        <div className="sh-access-head">What the reviewer can access</div>
-        <div className="sh-accessrow locked">
-          <span className="ic"><Icons.doc /></span>
-          <div className="txt">
-            <b>Verification report</b>
-            <span>Always on. The plain-language evidence that wins most disputes.</span>
+        <div className="grid gap-5 py-1">
+          <div className="grid gap-2">
+            <Label className="flex items-center text-muted-foreground">
+              Label
+              <Info text="A private note to help you remember which dispute this link is for. The reviewer never sees it." />
+            </Label>
+            <Input value={label} placeholder="e.g. DistroKid ticket #4821"
+              onChange={(e) => setLabel(e.target.value)} />
           </div>
-          <span className="sh-always">Included</span>
-        </div>
-        {["STEM_PREVIEW", "SESSION"].map((t) => {
-          const m = TIER_META[t];
-          return (
-            <div className="sh-accessrow" key={t}>
-              <span className="ic"><m.icon /></span>
-              <div className="txt">
-                <b>{m.label}<Info text={m.tip} /></b>
-                <span>{m.sub}</span>
-              </div>
-              <Switch checked={tiers.has(t)} onChange={() => toggle(t)} />
-            </div>
-          );
-        })}
-      </div>
 
-      {!editing && (
-        <label className="sh-field">
-          <span>Link expires after<Info text="After this, the link stops working automatically. You can also revoke it anytime." /></span>
-          <select value={expiry} onChange={(e) => setExpiry(Number(e.target.value))}>
-            <option value={7}>7 days</option>
-            <option value={30}>30 days</option>
-            <option value={90}>90 days</option>
-            <option value={0}>Never</option>
-          </select>
-        </label>
-      )}
-    </Modal>
+          <div className="grid gap-1">
+            <div className="text-xs font-semibold text-muted-foreground mb-1">
+              What the reviewer can access
+            </div>
+            <div className="flex items-center gap-3 py-3 border-t border-border">
+              <FileCheck className="size-4 shrink-0 text-muted-foreground" />
+              <div className="flex-1">
+                <div className="text-sm font-semibold">Verification report</div>
+                <div className="text-xs text-muted-foreground">
+                  Always on. The plain-language evidence that wins most disputes.
+                </div>
+              </div>
+              <span className="text-xs font-semibold text-muted-foreground">Included</span>
+            </div>
+            {["STEM_PREVIEW", "SESSION"].map((t) => {
+              const m = TIER_META[t];
+              return (
+                <div key={t} className="flex items-center gap-3 py-3 border-t border-border">
+                  <m.Icon className="size-4 shrink-0 text-muted-foreground" />
+                  <div className="flex-1">
+                    <div className="flex items-center text-sm font-semibold">
+                      {m.label}<Info text={m.tip} />
+                    </div>
+                    <div className="text-xs text-muted-foreground">{m.sub}</div>
+                  </div>
+                  <Switch checked={tiers.has(t)} onCheckedChange={() => toggle(t)} />
+                </div>
+              );
+            })}
+          </div>
+
+          {!editing && (
+            <div className="grid gap-2">
+              <Label className="flex items-center text-muted-foreground">
+                Link expires after
+                <Info text="After this, the link stops working automatically. You can also revoke it anytime." />
+              </Label>
+              <Select value={String(expiry)} onValueChange={(v) => setExpiry(Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7">7 days</SelectItem>
+                  <SelectItem value="30">30 days</SelectItem>
+                  <SelectItem value="90">90 days</SelectItem>
+                  <SelectItem value="0">Never</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button disabled={busy} onClick={save}>
+            {busy ? "Saving…" : editing ? "Save changes" : "Create link"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CopyLinkRow({ url }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true); toast.success("Link copied");
+      setTimeout(() => setCopied(false), 1600);
+    });
+  }
+  return (
+    <div className="flex items-center gap-2 rounded-[10px] border border-border bg-secondary px-3 py-2">
+      <Link2 className="size-4 shrink-0 text-muted-foreground" />
+      <code className="flex-1 truncate text-xs">{url}</code>
+      <Button size="sm" onClick={copy} className="shrink-0">
+        {copied ? <><Check className="size-3.5" /> Copied</> : <><Copy className="size-3.5" /> Copy</>}
+      </Button>
+    </div>
   );
 }
 
 function CreatedLink({ url, onClose }) {
-  const [copied, setCopied] = useState(false);
   return (
-    <Modal title="Your link is ready" onClose={onClose}
-      footer={<button className="sh-primary" onClick={onClose}>Done</button>}>
-      <p className="sh-modal-note">
-        Paste this into your reply to the distributor. They will not need a
-        SessionSeal account to open it.
-      </p>
-      <div className="sh-linkbox">
-        <span className="ic"><Icons.link /></span>
-        <code>{url}</code>
-        <button className="sh-copy" onClick={() => {
-          navigator.clipboard.writeText(url).then(() => {
-            setCopied(true); setTimeout(() => setCopied(false), 1600);
-          });
-        }}>{copied ? "Copied" : <><Icons.copy /> Copy</>}</button>
-      </div>
-    </Modal>
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-[460px]">
+        <DialogHeader>
+          <DialogTitle className="font-serif text-2xl font-normal">Your link is ready</DialogTitle>
+          <DialogDescription>
+            Paste this into your reply to the distributor. They won't need a
+            SessionSeal account to open it.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-1"><CopyLinkRow url={url} /></div>
+        <DialogFooter>
+          <Button onClick={onClose}>Done</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -176,27 +256,42 @@ function SharePanel({ recordId }) {
 
   const active = (shares || []).filter((s) => s.status !== "REVOKED");
 
+  function copyLink(token) {
+    navigator.clipboard.writeText(`${window.location.origin}/s/${token}`)
+      .then(() => toast.success("Link copied"));
+  }
+
   return (
-    <section className="sh-panel">
-      <div className="sh-panel-head">
+    <section id="dispute-links" className="mt-8 scroll-mt-6 border-t border-border pt-7">
+      <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h2>Dispute links<Info text="If a distributor flags this track as AI, send them a link. They see a plain-language report proving real studio work. You control exactly what each link can access and can change or revoke it anytime." /></h2>
-          <p>Share this record's evidence with a distributor, without handing over your files.</p>
+          <h2 className="flex items-center text-lg font-bold">
+            Dispute links
+            <Info text="If a distributor flags this track as AI, send them a link. They see a plain-language report proving real studio work. You control exactly what each link can access and can change or revoke it anytime." />
+          </h2>
+          <p className="mt-1 max-w-[46ch] text-sm text-muted-foreground">
+            Share this record's evidence with a distributor, without handing over your files.
+          </p>
         </div>
-        <button className="sh-primary" onClick={() => setCreating(true)}>
-          <Icons.link /> New link
-        </button>
+        <Button onClick={() => setCreating(true)} className="shrink-0 gap-1.5">
+          <Link2 className="size-4" /> New link
+        </Button>
       </div>
 
-      {shares === null && <p className="sh-empty">Loading…</p>}
+      {shares === null && (
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-[68px] w-full rounded-xl" />
+          <Skeleton className="h-[68px] w-full rounded-xl" />
+        </div>
+      )}
       {shares && active.length === 0 && (
-        <div className="sh-empty">
+        <div className="rounded-xl border border-dashed border-border p-5 text-center text-sm text-muted-foreground">
           No links yet. Create one to share this record with a reviewer.
         </div>
       )}
 
       {shares && active.length > 0 && (
-        <div className="sh-list">
+        <div className="flex flex-col gap-2.5">
           {active.map((s) => {
             const extra = s.tiers.filter((t) => t !== "REPORT");
             const views = (s.accesses || []).length;
@@ -204,18 +299,21 @@ function SharePanel({ recordId }) {
               .map((a) => a.reviewer_email).filter(Boolean)).size;
             const last = (s.accesses || [])[0];
             return (
-              <div className="sh-card" key={s.id} onClick={() => setDetail(s)}>
-                <div className="sh-card-main">
-                  <div className="sh-card-title">
-                    <b>{s.label || "Untitled link"}</b>
-                    <span className="sh-badges">
-                      <span className="sh-badge report">Report</span>
-                      {extra.map((t) => (
-                        <span className="sh-badge" key={t}>{TIER_META[t].label}</span>
+              <div key={s.id}
+                className="group flex items-center gap-3 rounded-xl border border-border bg-secondary px-4 py-3.5 transition-colors hover:border-accent cursor-pointer"
+                onClick={() => setDetail(s)}>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <b className="text-[0.95rem]">{s.label || "Untitled link"}</b>
+                    <div className="flex flex-wrap gap-1.5">
+                      {extra.length === 0 ? (
+                        <Badge variant="outline" className="text-muted-foreground">Report only</Badge>
+                      ) : extra.map((t) => (
+                        <Badge key={t} variant="secondary">{TIER_META[t].label}</Badge>
                       ))}
-                    </span>
+                    </div>
                   </div>
-                  <div className="sh-card-activity">
+                  <div className="mt-1.5 text-xs text-muted-foreground">
                     {views === 0
                       ? "Not opened yet"
                       : `Opened ${views} time${views > 1 ? "s" : ""}` +
@@ -223,7 +321,13 @@ function SharePanel({ recordId }) {
                         (last ? ` · last ${relTime(last.created_at)}` : "")}
                   </div>
                 </div>
-                <span className="sh-card-chev">›</span>
+                <Button variant="ghost" size="icon"
+                  className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                  onClick={(e) => { e.stopPropagation(); copyLink(s.token); }}
+                  aria-label="Copy link">
+                  <Copy className="size-4" />
+                </Button>
+                <ChevronRight className="size-5 shrink-0 text-muted-foreground" />
               </div>
             );
           })}
@@ -252,45 +356,80 @@ function SharePanel({ recordId }) {
   );
 }
 
-// Detail drawer: activity timeline + manage / revoke, opened by clicking a card.
+// Detail dialog: link, activity timeline, manage / revoke. Opened by a card.
 function ShareDetail({ share, onClose, onEdit, onRevoke }) {
   const extra = share.tiers.filter((t) => t !== "REPORT");
   const accesses = share.accesses || [];
+  const [confirmRevoke, setConfirmRevoke] = useState(false);
+  const url = typeof window !== "undefined"
+    ? `${window.location.origin}/s/${share.token}` : "";
   return (
-    <Modal title={share.label || "Untitled link"} onClose={onClose}
-      footer={
-        <>
-          <button className="sh-danger" onClick={() => {
-            if (confirm("Revoke this link? The reviewer loses access immediately.")) onRevoke();
-          }}><Icons.trash /> Revoke</button>
-          <button className="sh-primary" onClick={onEdit}>Manage access</button>
-        </>
-      }>
-      <div className="sh-detail-tiers">
-        <span className="sh-badge report">Report</span>
-        {extra.map((t) => <span className="sh-badge" key={t}>{TIER_META[t].label}</span>)}
-      </div>
-      <div className="sh-detail-sub">Activity</div>
-      {accesses.length === 0 ? (
-        <p className="sh-empty">This link hasn't been opened yet.</p>
-      ) : (
-        <ul className="sh-timeline">
-          {accesses.map((a, i) => (
-            <li key={i}>
-              <span className="dot" />
-              <div>
-                <b>{a.reviewer_email || "A reviewer"}</b>{" "}
-                {a.action === "VIEW_REPORT" ? "viewed the report"
-                  : a.action === "STREAM_STEM" ? "listened to a stem"
-                  : a.action === "DOWNLOAD_SESSION" ? "downloaded the session"
-                  : "accessed the record"}
-                <span className="t">{relTime(a.created_at)}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Modal>
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-[460px]">
+        <DialogHeader>
+          <DialogTitle className="font-serif text-2xl font-normal">
+            {share.label || "Untitled link"}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="grid gap-5 py-1">
+          <div className="flex flex-wrap gap-1.5">
+            {extra.length === 0
+              ? <Badge variant="outline" className="text-muted-foreground">Report only</Badge>
+              : <>
+                  <Badge variant="secondary">Report</Badge>
+                  {extra.map((t) => <Badge key={t} variant="secondary">{TIER_META[t].label}</Badge>)}
+                </>}
+          </div>
+
+          <CopyLinkRow url={url} />
+
+          <div>
+            <div className="mb-3 text-xs font-semibold text-muted-foreground">Activity</div>
+            {accesses.length === 0 ? (
+              <p className="text-sm text-muted-foreground">This link hasn't been opened yet.</p>
+            ) : (
+              <ul className="flex flex-col gap-3.5">
+                {accesses.map((a, i) => (
+                  <li key={i} className="flex gap-3 text-sm">
+                    <span className="mt-1.5 size-2 shrink-0 rounded-full bg-accent" />
+                    <div>
+                      <b>{a.reviewer_email || "A reviewer"}</b>{" "}
+                      {a.action === "VIEW_REPORT" ? "viewed the report"
+                        : a.action === "STREAM_STEM" ? "listened to a stem"
+                        : a.action === "DOWNLOAD_SESSION" ? "downloaded the session"
+                        : "accessed the record"}
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {relTime(a.created_at)}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter className="sm:justify-between">
+          {confirmRevoke ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Revoke now?</span>
+              <Button variant="destructive" size="sm"
+                onClick={() => { onRevoke(); toast.success("Link revoked"); }}>
+                Yes, revoke
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setConfirmRevoke(false)}>Keep</Button>
+            </div>
+          ) : (
+            <Button variant="outline" className="gap-1.5 text-destructive hover:text-destructive"
+              onClick={() => setConfirmRevoke(true)}>
+              <Trash2 className="size-4" /> Revoke
+            </Button>
+          )}
+          <Button onClick={onEdit}>Manage access</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -359,7 +498,13 @@ export default function RecordPage() {
         <a className="db-back" href="/">← All records</a>
 
         {error && <div className="db-error">{error}</div>}
-        {!rec && !error && <div className="db-loading">Loading…</div>}
+        {!rec && !error && (
+          <div className="flex flex-col gap-4">
+            <Skeleton className="h-10 w-2/3" />
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="mt-4 h-48 w-full rounded-2xl" />
+          </div>
+        )}
 
         {rec && (
           <>
@@ -370,16 +515,21 @@ export default function RecordPage() {
               </div>
               {sealed && (
                 <div className="rec-actions">
-                  <IconButton label="Download signed master"
+                  <IconAction label="Download signed master"
                     href={`${API}/records/${rec.id}/release`} download>
-                    <Icons.download />
-                  </IconButton>
+                    <Download className="size-[18px]" />
+                  </IconAction>
                   {rec.manifest_public_url && (
-                    <IconButton label="View signed manifest"
+                    <IconAction label="View signed manifest"
                       href={rec.manifest_public_url}>
-                      <Icons.manifest />
-                    </IconButton>
+                      <FileText className="size-[18px]" />
+                    </IconAction>
                   )}
+                  <IconAction label="Share for a dispute"
+                    onClick={() => document.getElementById("dispute-links")
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" })}>
+                    <Share2 className="size-[18px]" />
+                  </IconAction>
                 </div>
               )}
             </div>
