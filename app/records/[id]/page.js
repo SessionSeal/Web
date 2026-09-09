@@ -124,7 +124,7 @@ function ShareModal({ recordId, existing, onClose, onSaved }) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-5 py-1">
+        <div className="grid gap-5 py-1 [&>*]:min-w-0">
           <div className="grid gap-2">
             <Label className="flex items-center text-muted-foreground">
               Label
@@ -374,7 +374,7 @@ function ShareDetail({ share, onClose, onEdit, onRevoke }) {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-5 py-1">
+        <div className="grid gap-5 py-1 [&>*]:min-w-0">
           <div className="flex flex-wrap gap-1.5">
             {extra.length === 0
               ? <Badge variant="outline" className="text-muted-foreground">Report only</Badge>
