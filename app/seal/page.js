@@ -22,6 +22,20 @@ function fmtBytes(n) {
   return `${(n / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+// A dropped bounce is almost always named after the track, so it seeds the
+// title when that field is still empty. Strips the extension and the browser's
+// " (1)" duplicate suffix, which can nest ("Belief.wav (1).wav").
+const AUDIO_EXT = /\.(wav|wave|aif|aiff|mp3|m4a|flac|aac|ogg|caf)$/i;
+function titleFromFilename(name) {
+  let s = name;
+  for (let i = 0; i < 4; i++) {
+    const next = s.replace(AUDIO_EXT, "").replace(/\s*\(\d+\)\s*$/, "");
+    if (next === s) break;
+    s = next;
+  }
+  return s.replace(/_+/g, " ").replace(/\s+/g, " ").trim();
+}
+
 async function walkEntry(entry, prefix, out) {
   if (entry.isFile) {
     const file = await new Promise((res, rej) => entry.file(res, rej));
@@ -174,6 +188,11 @@ export default function ArtistApp() {
   const projInput = useRef(null);
   const folderInput = useRef(null);
   const linkInput = useRef(null);
+
+  function pickMaster(f) {
+    setMaster(f);
+    setTitle((cur) => cur.trim() || titleFromFilename(f.name));
+  }
 
   function dropFiles(e, multiple) {
     const files = Array.from(e.dataTransfer.files || []);
@@ -420,16 +439,21 @@ export default function ArtistApp() {
               big={master ? `✓ ${master.name}` : "Drop your master here"}
               small={master ? fmtBytes(master.size) : "WAV straight from your bounce, or click to browse"}
               onClick={() => masterInput.current.click()}
-              onDrop={(e) => { const [f] = dropFiles(e, false); if (f) setMaster(f); }}
+              onDrop={(e) => { const [f] = dropFiles(e, false); if (f) pickMaster(f); }}
             />
             <input ref={masterInput} type="file" accept="audio/*" hidden
-              onChange={(e) => e.target.files[0] && setMaster(e.target.files[0])} />
+              onChange={(e) => e.target.files[0] && pickMaster(e.target.files[0])} />
             <div className="wz-tip">
               <b>Tip:</b> in Logic, bounce with <b>File → Bounce → Project or
               Section</b>, PCM/WAVE, and <b>Normalize off</b>.
             </div>
             <div className="wz-navrow">
-              <span />
+              <span className="wz-need">
+                {canNext ? "" :
+                 !master ? "Add your master to continue." :
+                 !title.trim() ? "Give the track a title to continue." :
+                 "Add your artist name to continue."}
+              </span>
               <button className="wz-btn" disabled={!canNext} onClick={() => setStep(1)}>
                 Next: your stems →
               </button>

@@ -1536,6 +1536,12 @@ button:focus-visible,
   margin-top: 34px;
 }
 
+.wz-need {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-family: var(--sans);
+}
+
 .wz-btn {
   display: inline-flex;
   align-items: center;
