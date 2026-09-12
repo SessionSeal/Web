@@ -22,6 +22,20 @@ function fmtBytes(n) {
   return `${(n / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+// A dropped bounce is almost always named after the track, so it seeds the
+// title when that field is still empty. Strips the extension and the browser's
+// " (1)" duplicate suffix, which can nest ("Belief.wav (1).wav").
+const AUDIO_EXT = /\.(wav|wave|aif|aiff|mp3|m4a|flac|aac|ogg|caf)$/i;
+function titleFromFilename(name) {
+  let s = name;
+  for (let i = 0; i < 4; i++) {
+    const next = s.replace(AUDIO_EXT, "").replace(/\s*\(\d+\)\s*$/, "");
+    if (next === s) break;
+    s = next;
+  }
+  return s.replace(/_+/g, " ").replace(/\s+/g, " ").trim();
+}
+
 async function walkEntry(entry, prefix, out) {
   if (entry.isFile) {
     const file = await new Promise((res, rej) => entry.file(res, rej));
@@ -175,6 +189,11 @@ export default function ArtistApp() {
   const folderInput = useRef(null);
   const linkInput = useRef(null);
 
+  function pickMaster(f) {
+    setMaster(f);
+    setTitle((cur) => cur.trim() || titleFromFilename(f.name));
+  }
+
   function dropFiles(e, multiple) {
     const files = Array.from(e.dataTransfer.files || []);
     return multiple ? files : files.slice(0, 1);
@@ -304,10 +323,9 @@ export default function ArtistApp() {
       setError(
         /NetworkError|fetch failed|Load failed|network/i.test(msg)
           ? "The upload failed before reaching the server. This usually " +
-            "means the browser couldn't read one of the files, if you " +
-            "picked the .logicx from a file dialog, go back and drag it " +
-            "into the box instead (or zip it first). Also make sure the " +
-            "project isn't open in Logic while uploading."
+            "means the browser couldn't read one of the files. Go back " +
+            "and choose the project folder again (or zip it first), and " +
+            "make sure the project isn't open in Logic while uploading."
           : msg
       );
     } finally {
@@ -420,16 +438,21 @@ export default function ArtistApp() {
               big={master ? `✓ ${master.name}` : "Drop your master here"}
               small={master ? fmtBytes(master.size) : "WAV straight from your bounce, or click to browse"}
               onClick={() => masterInput.current.click()}
-              onDrop={(e) => { const [f] = dropFiles(e, false); if (f) setMaster(f); }}
+              onDrop={(e) => { const [f] = dropFiles(e, false); if (f) pickMaster(f); }}
             />
             <input ref={masterInput} type="file" accept="audio/*" hidden
-              onChange={(e) => e.target.files[0] && setMaster(e.target.files[0])} />
+              onChange={(e) => e.target.files[0] && pickMaster(e.target.files[0])} />
             <div className="wz-tip">
               <b>Tip:</b> in Logic, bounce with <b>File → Bounce → Project or
               Section</b>, PCM/WAVE, and <b>Normalize off</b>.
             </div>
             <div className="wz-navrow">
-              <span />
+              <span className="wz-need">
+                {canNext ? "" :
+                 !master ? "Add your master to continue." :
+                 !title.trim() ? "Give the track a title to continue." :
+                 "Add your artist name to continue."}
+              </span>
               <button className="wz-btn" disabled={!canNext} onClick={() => setStep(1)}>
                 Next: your stems →
               </button>
@@ -497,76 +520,73 @@ export default function ArtistApp() {
             </p>
             <Drop
               filled={!!project}
-              big={project ? `✓ ${project.label}` : "Drag your .logicx here, straight from Finder"}
+              big={project ? `✓ ${project.label}` : "Choose the folder your project is in"}
               small={project
-                ? "Session received"
-                : "Dragging works best, or click to browse (.zip works from the dialog)"}
-              onClick={() => projInput.current.click()}
+                ? "Session received. Click to choose a different folder"
+                : "Click to browse, then pick the folder that holds your .logicx. Or drag the project here"}
+              onClick={() => folderInput.current.click()}
               onDrop={onProjectDrop}
             />
-            <input ref={projInput} type="file" accept=".zip,.logicx" hidden
+            {/* macOS treats .logicx as a package the file dialog can't read,
+                so clicking picks the folder around it and we find it inside. */}
+            <input ref={folderInput} type="file" webkitdirectory="" multiple hidden
               onChange={(e) => {
-                const f = e.target.files[0];
+                const all = Array.from(e.target.files || []);
                 e.target.value = "";
-                if (!f) return;
-                if (!f.name.toLowerCase().endsWith(".zip") || f.size === 0) {
+                if (!all.length) return;
+                const relPath = (f) => {
+                  const p = f.webkitRelativePath || f.name;
+                  const parts = p.split("/");
+                  const i = parts.findIndex((s) => s.toLowerCase().endsWith(".logicx"));
+                  return i >= 0 ? parts.slice(i).join("/") : p;
+                };
+                // Keep only the .logicx subtree; if several projects live in
+                // the chosen folder, take the one with the most files.
+                const inPkg = all.filter((f) =>
+                  (f.webkitRelativePath || "").toLowerCase().includes(".logicx/"));
+                let fs;
+                if (inPkg.length) {
+                  const byRoot = {};
+                  for (const f of inPkg) {
+                    const root = relPath(f).split("/")[0];
+                    (byRoot[root] = byRoot[root] || []).push(f);
+                  }
+                  fs = Object.values(byRoot).sort((a, b) => b.length - a.length)[0];
+                } else if (all.some((f) =>
+                    /(^|\/)(projectdata|metadata\.plist)$/i.test(f.webkitRelativePath || f.name))) {
+                  fs = all; // the chosen folder IS the project
+                } else {
                   setError(
-                    "Browsers can't read a Logic project chosen from the file " +
-                    "dialog, please drag the .logicx into the box instead " +
-                    "(straight from Finder, no zip needed). A .zip of the " +
-                    "project also works from the dialog."
+                    "No Logic project found in that folder. Choose the " +
+                    "folder that contains your .logicx (for example your " +
+                    "Logic folder in Music), not the .logicx itself."
                   );
                   return;
                 }
+                const first = relPath(fs[0]);
                 setError(null);
-                setProject({ zip: f, label: f.name });
+                setProject({
+                  files: fs.map((f) => ({ file: f, path: relPath(f) })),
+                  label: `${first.split("/")[0]} (${fs.length} files)`,
+                });
               }} />
             <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: 24 }}>
-              No drag available?{" "}
+              Already zipped it?{" "}
               <button className="wz-btn ghost" style={{ padding: "3px 14px", fontSize: "0.78rem" }}
-                onClick={() => folderInput.current.click()}>
-                Pick the folder that contains the project
+                onClick={() => projInput.current.click()}>
+                Choose a .zip instead
               </button>
-              <input ref={folderInput} type="file" webkitdirectory="" multiple hidden
+              <input ref={projInput} type="file" accept=".zip" hidden
                 onChange={(e) => {
-                  const all = Array.from(e.target.files || []);
+                  const f = e.target.files[0];
                   e.target.value = "";
-                  if (!all.length) return;
-                  const relPath = (f) => {
-                    const p = f.webkitRelativePath || f.name;
-                    const parts = p.split("/");
-                    const i = parts.findIndex((s) => s.toLowerCase().endsWith(".logicx"));
-                    return i >= 0 ? parts.slice(i).join("/") : p;
-                  };
-                  // Keep only the .logicx subtree; if several projects live in
-                  // the chosen folder, take the one with the most files.
-                  const inPkg = all.filter((f) =>
-                    (f.webkitRelativePath || "").toLowerCase().includes(".logicx/"));
-                  let fs;
-                  if (inPkg.length) {
-                    const byRoot = {};
-                    for (const f of inPkg) {
-                      const root = relPath(f).split("/")[0];
-                      (byRoot[root] = byRoot[root] || []).push(f);
-                    }
-                    fs = Object.values(byRoot).sort((a, b) => b.length - a.length)[0];
-                  } else if (all.some((f) =>
-                      /(^|\/)(projectdata|metadata\.plist)$/i.test(f.webkitRelativePath || f.name))) {
-                    fs = all; // the chosen folder IS the project
-                  } else {
-                    setError(
-                      "No Logic project found in that folder. Choose the " +
-                      "folder that contains your .logicx (for example your " +
-                      "Logic Projects folder), or drag the project in."
-                    );
+                  if (!f) return;
+                  if (!f.name.toLowerCase().endsWith(".zip") || f.size === 0) {
+                    setError("That doesn't look like a .zip. Choose the project folder instead.");
                     return;
                   }
-                  const first = relPath(fs[0]);
                   setError(null);
-                  setProject({
-                    files: fs.map((f) => ({ file: f, path: relPath(f) })),
-                    label: `${first.split("/")[0]} (${fs.length} files)`,
-                  });
+                  setProject({ zip: f, label: f.name });
                 }} />
             </p>
             <div className="wz-tip">
